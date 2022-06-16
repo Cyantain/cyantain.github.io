@@ -1,0 +1,31 @@
+<html>
+  <head>
+    <title>答案检测网页</title>
+    <script>
+    	function run(tup){
+            if(tup.value == tup.alt) tup.value = "答案正确^-^";
+            else tup.value = "答案错误X-X";
+        }
+	</script>
+  </head>
+  <body>
+    <h1>
+      在这里，你可以查看自己未完成的任务，或者检测简答题的答案是否正确。
+    </h1>
+    <p>-------------------</p>
+    <p><字谜></p>
+    <p>
+    你的答案是：
+    <input type="text" alt="兵"  onclick="if(value!=defaultValue)value='';" onblur="run(this)">
+    </p>
+    <p>-------------------</p>
+    <p><找规律></p>
+    <p>
+    你的答案是：
+    <input type="text" alt="222219"  onclick="if(value!=defaultValue)value='';" onblur="run(this)">
+    </p>
+    <p>-------------------</p>
+    <p><老鼠之辩></p>
+    <p>-------------------</p>
+  </body>
+</html>
