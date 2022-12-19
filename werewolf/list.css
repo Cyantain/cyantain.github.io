@@ -14,14 +14,24 @@
 
 .history{
     width: 500px;
-    height: 50px;
+    height: 94px;
+    /* +22px */
     margin: 20px;
+    font-size: 80%;
     background-color:gray;
     border: 3px solid rgb(120, 142, 142);
 }
 
 .smallUnit{
-    width: 70px;
+    width: 50px;
+    height: 20px;
+    float: left;
+    margin: 2px;
+    background-color:white;
+}
+
+.middleUnit{
+    width: 110px;
     height: 20px;
     float: left;
     margin: 2px;
