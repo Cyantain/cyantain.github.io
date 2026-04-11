@@ -1,0 +1,2198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magicstone</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: #06050f;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: #e0e0e0; user-select: none; overflow: auto;
+    }
+
+    /* ===== 深空背景 ===== */
+    #bgCanvas {
+      position: fixed; inset: 0; z-index: -2;
+      width: 100%; height: 100%;
+      pointer-events: none;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: -1;
+      background:
+        radial-gradient(ellipse 80% 60% at 15% 85%, rgba(100, 30, 160, 0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 70% 50% at 85% 15%, rgba(20, 60, 180, 0.14) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 50% 40%, rgba(180, 100, 40, 0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* ===== 页面系统 ===== */
+    .page { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-height: 100vh; padding: 20px; }
+    .page.active { display: flex; }
+
+    /* ===== 主界面 ===== */
+    .home-title {
+      font-size: 68px; font-weight: 900; letter-spacing: 10px;
+      color: #e8dcc8;
+      text-shadow:
+        0 0 2px rgba(255,255,255,0.3),
+        0 2px 4px rgba(0,0,0,0.5),
+        0 0 40px rgba(255,200,100,0.12),
+        0 0 80px rgba(180,140,80,0.08);
+      margin-bottom: 6px;
+      position: relative;
+    }
+    .home-title::after {
+      content: '';
+      position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+      width: 120px; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(232,220,200,0.4), transparent);
+    }
+
+    @keyframes shimmer { to { background-position: 300% center; } }
+
+    .home-subtitle { font-size: 15px; color: rgba(255,255,255,0.35); letter-spacing: 6px; margin-bottom: 52px; font-weight: 300; text-transform: uppercase; }
+    .home-buttons { display: flex; flex-direction: column; gap: 16px; align-items: center; }
+
+    .home-btn {
+      width: 260px; padding: 18px 0; border: none; border-radius: 16px;
+      font-size: 17px; font-weight: 700; cursor: pointer; letter-spacing: 4px;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s;
+      position: relative; overflow: hidden;
+    }
+    .home-btn::after {
+      content: '';
+      position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.5s;
+    }
+    .home-btn:hover::after { left: 120%; }
+    .home-btn:hover { transform: translateY(-3px) scale(1.03); }
+    .home-btn:active { transform: translateY(0) scale(0.98); }
+
+    .home-btn-start {
+      background: linear-gradient(135deg, #f9d423, #ff6b35, #ff4e50);
+      background-size: 200% auto;
+      color: #fff; box-shadow: 0 6px 28px rgba(255, 107, 53, 0.35), 0 0 0 1px rgba(255,200,0,0.1);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    .home-btn-start:hover { box-shadow: 0 8px 36px rgba(255, 107, 53, 0.5), 0 0 0 1px rgba(255,200,0,0.2); background-position: right center; }
+    .home-btn-rules {
+      background: rgba(255, 255, 255, 0.06); color: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+    }
+    .home-btn-rules:hover { background: rgba(255, 255, 255, 0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); }
+
+    .home-decor { position: fixed; pointer-events: none; animation: floatUp linear infinite; opacity: 0; }
+    .home-decor.gem { border-radius: 2px; transform: rotate(45deg); }
+    .home-decor.orb { border-radius: 50%; }
+    @keyframes floatUp {
+      0% { opacity: 0; transform: translateY(0) scale(0.5) rotate(0deg); }
+      15% { opacity: 0.7; }
+      85% { opacity: 0.15; }
+      100% { opacity: 0; transform: translateY(-100vh) scale(0.2) rotate(180deg); }
+    }
+
+    /* ===== 关卡选择 ===== */
+    .level-page-title { font-size: 32px; font-weight: 700; letter-spacing: 4px; margin-bottom: 36px; background: linear-gradient(90deg, #f9d423, #ff4e50); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .level-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 36px; }
+    .level-card {
+      width: 140px; padding: 20px 12px; border-radius: 16px;
+      background: rgba(255, 255, 255, 0.06); border: 1.5px solid rgba(255, 255, 255, 0.1);
+      text-align: center; cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s, box-shadow 0.3s;
+      position: relative;
+    }
+    .level-card:hover:not(.locked) { transform: translateY(-4px) scale(1.03); border-color: rgba(249, 212, 35, 0.5); box-shadow: 0 6px 20px rgba(249, 212, 35, 0.15); }
+    .level-card.locked { opacity: 0.35; cursor: not-allowed; filter: grayscale(0.6); }
+    .level-card.completed { border-color: rgba(46, 213, 115, 0.4); background: rgba(46, 213, 115, 0.06); }
+    .level-num { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+    .level-card:not(.locked) .level-num { background: linear-gradient(135deg, #f9d423, #ff4e50); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .level-card.locked .level-num { color: #555; }
+    .level-label { font-size: 12px; color: #888; letter-spacing: 1px; margin-bottom: 2px; }
+    .level-size { font-size: 11px; color: #666; margin-bottom: 2px; }
+    .level-difficulty { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .level-difficulty.d1,.level-difficulty.d2 { color: #2ed573; }
+    .level-difficulty.d3,.level-difficulty.d4 { color: #45aaf2; }
+    .level-difficulty.d5,.level-difficulty.d6 { color: #f9d423; }
+    .level-difficulty.d7,.level-difficulty.d8 { color: #ffa502; }
+    .level-difficulty.d9,.level-difficulty.d10 { color: #ff4e50; }
+    .level-status { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; margin-top: 6px; }
+    .level-status.done { color: #2ed573; } .level-status.lock { color: #555; } .level-status.open { color: #f9d423; }
+    .level-card.completed::after { content: '✓'; position: absolute; top: 8px; right: 10px; font-size: 16px; color: #2ed573; font-weight: 700; }
+
+    /* ===== 规则说明 ===== */
+    .rules-container { max-width: 560px; padding: 32px; background: rgba(255, 255, 255, 0.05); border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); margin-bottom: 32px; max-height: 70vh; overflow-y: auto; }
+    .rules-container::-webkit-scrollbar { width: 4px; } .rules-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+    .rules-title { font-size: 24px; font-weight: 700; text-align: center; letter-spacing: 3px; margin-bottom: 24px; background: linear-gradient(90deg, #f9d423, #ff4e50); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .rules-section { margin-bottom: 20px; }
+    .rules-section h3 { font-size: 15px; font-weight: 700; color: #f9d423; margin-bottom: 8px; letter-spacing: 1px; }
+    .rules-section p, .rules-section li { font-size: 13px; color: #bbb; line-height: 1.8; }
+    .rules-section ul { padding-left: 18px; } .rules-section li { margin-bottom: 4px; }
+    .rules-magic { display: inline-block; background: linear-gradient(135deg, #f9d423, #ff4e50, #a55eea); background-size: 200% 200%; animation: magicShimmer 2s ease infinite; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; }
+
+    /* ===== 通用导航 ===== */
+    .nav-btn { padding: 12px 32px; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; background: rgba(255, 255, 255, 0.08); color: #ccc; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 1px; transition: transform 0.2s, background 0.2s, box-shadow 0.2s; }
+    .nav-btn:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.12); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+    /* ===== 游戏页面 ===== */
+    .game-header { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+    .game-title { font-size: 22px; letter-spacing: 3px; background: linear-gradient(90deg, #f9d423, #ff4e50); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; }
+    .game-back-btn { padding: 6px 16px; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; background: rgba(255,255,255,0.06); color: #999; font-size: 12px; cursor: pointer; transition: all 0.2s; letter-spacing: 1px; }
+    .game-back-btn:hover { background: rgba(255,255,255,0.1); color: #ccc; }
+    .subtitle { font-size: 13px; color: #888; margin-bottom: 20px; letter-spacing: 2px; }
+    .main-container { display: flex; align-items: flex-start; gap: 28px; }
+
+    /* ===== 数字面板 ===== */
+    .number-panel { display: flex; flex-direction: column; gap: 8px; padding: 18px 14px; background: rgba(255, 255, 255, 0.05); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); transition: border-color 0.25s, background 0.25s; }
+    .number-panel.highlight-return { border-color: rgba(46, 213, 115, 0.5); background: rgba(46, 213, 115, 0.06); }
+    .panel-title { font-size: 12px; text-align: center; color: #999; margin-bottom: 2px; letter-spacing: 1px; }
+    .panel-hint { font-size: 10px; text-align: center; color: #666; margin-bottom: 4px; }
+    .panel-divider { height: 1px; background: rgba(255, 255, 255, 0.08); margin: 4px 0; }
+
+    .number-block {
+      width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 700; border-radius: 12px; cursor: grab;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, opacity 0.25s, filter 0.25s;
+      position: relative;
+    }
+    .number-block:hover { transform: scale(1.1); z-index: 10; }
+    .number-block:active { cursor: grabbing; transform: scale(0.95); }
+    .number-block.dragging { opacity: 0.35; transform: scale(0.9); }
+    .number-block.depleted { opacity: 0.22; filter: grayscale(1) brightness(0.6); cursor: not-allowed; pointer-events: none; }
+    .number-block.hidden-num { display: none; }
+
+    .num-badge { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: rgba(0, 0, 0, 0.7); border: 1.5px solid rgba(255, 255, 255, 0.25); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; color: #fff; line-height: 1; }
+    .num-badge.zero { background: rgba(255, 0, 0, 0.5); border-color: rgba(255, 80, 80, 0.4); color: #f88; }
+
+    .number-block[data-num="1"] { background: linear-gradient(135deg, #ff6b6b, #ee5a24); box-shadow: 0 4px 15px rgba(238, 90, 36, 0.4); }
+    .number-block[data-num="2"] { background: linear-gradient(135deg, #ffa502, #e67e22); box-shadow: 0 4px 15px rgba(230, 126, 34, 0.4); }
+    .number-block[data-num="3"] { background: linear-gradient(135deg, #ffd32a, #f9ca24); box-shadow: 0 4px 15px rgba(249, 202, 36, 0.4); color: #333; }
+    .number-block[data-num="4"] { background: linear-gradient(135deg, #2ed573, #05c46b); box-shadow: 0 4px 15px rgba(5, 196, 107, 0.4); }
+    .number-block[data-num="5"] { background: linear-gradient(135deg, #1abc9c, #0be881); box-shadow: 0 4px 15px rgba(11, 232, 129, 0.4); }
+    .number-block[data-num="6"] { background: linear-gradient(135deg, #45aaf2, #2d98da); box-shadow: 0 4px 15px rgba(45, 152, 218, 0.4); }
+    .number-block[data-num="7"] { background: linear-gradient(135deg, #4b7bec, #3867d6); box-shadow: 0 4px 15px rgba(56, 103, 214, 0.4); }
+    .number-block[data-num="8"] { background: linear-gradient(135deg, #a55eea, #8854d0); box-shadow: 0 4px 15px rgba(136, 84, 208, 0.4); }
+    .number-block[data-num="9"] { background: linear-gradient(135deg, #fc5c65, #eb3b5a); box-shadow: 0 4px 15px rgba(235, 59, 90, 0.4); }
+
+    .number-block.magic-block { background: linear-gradient(135deg, #f9d423, #ff4e50, #a55eea, #45aaf2, #2ed573, #f9d423); background-size: 300% 300%; animation: magicShimmer 3s ease infinite; box-shadow: 0 4px 20px rgba(249, 212, 35, 0.4), 0 0 12px rgba(165, 94, 234, 0.3); font-size: 24px; color: #fff; text-shadow: 0 0 8px rgba(255,255,255,0.5); }
+    .number-block.magic-block.depleted { animation: none; filter: grayscale(1) brightness(0.4); }
+    .magic-label { font-size: 9px; text-align: center; color: #b8a030; letter-spacing: 2px; margin-top: -2px; font-weight: 600; }
+
+    @keyframes magicShimmer { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+    /* ===== 网格 ===== */
+    .grid-wrapper { position: relative; }
+    .grid-container { display: grid; gap: 4px; padding: 16px; background: rgba(255, 255, 255, 0.04); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); }
+
+    .grid-cell {
+      border-radius: 10px; background: rgba(255, 255, 255, 0.04);
+      border: 1.5px dashed rgba(255, 255, 255, 0.12);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      position: relative;
+    }
+    .grid-cell.highlight { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.35); transform: scale(1.04); }
+    .grid-cell.filled { border-style: solid; border-color: rgba(255, 255, 255, 0.15); }
+    .grid-cell.filled:hover { transform: scale(1.06); z-index: 5; }
+    .grid-cell.return-hint::after { content: '↩'; position: absolute; top: 2px; right: 4px; font-size: 10px; color: rgba(255,255,255,0.35); }
+
+    .grid-cell.magic-cell {
+      background: linear-gradient(135deg, #f9d423, #ff4e50, #a55eea, #45aaf2, #2ed573, #f9d423);
+      background-size: 300% 300%; animation: magicShimmer 3s ease infinite;
+      box-shadow: 0 0 14px rgba(249, 212, 35, 0.35), 0 0 6px rgba(165, 94, 234, 0.25);
+      color: #fff; text-shadow: 0 0 6px rgba(255,255,255,0.5);
+      border-color: rgba(249, 212, 35, 0.4);
+    }
+    .grid-cell.magic-cell.return-hint::after { color: rgba(255,255,255,0.5); }
+
+    /* ===== 任务面板 ===== */
+    .task-panel { width: 280px; padding: 20px 16px; background: rgba(255, 255, 255, 0.05); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); max-height: 560px; overflow-y: auto; }
+    .task-panel::-webkit-scrollbar { width: 4px; } .task-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+    .task-panel-title { font-size: 14px; font-weight: 700; letter-spacing: 2px; margin-bottom: 6px; text-align: center; color: #f9d423; }
+    .task-panel-progress { font-size: 11px; text-align: center; color: #888; margin-bottom: 10px; letter-spacing: 1px; }
+    .task-progress-bar { width: 100%; height: 4px; background: rgba(255, 255, 255, 0.08); border-radius: 2px; margin-bottom: 14px; overflow: hidden; }
+    .task-progress-fill { height: 100%; background: linear-gradient(90deg, #f9d423, #ff4e50); border-radius: 2px; transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+    .task-item { padding: 10px 12px; margin-bottom: 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); transition: background 0.3s, border-color 0.3s, transform 0.3s; position: relative; overflow: hidden; }
+    .task-item.completed { background: rgba(46, 213, 115, 0.1); border-color: rgba(46, 213, 115, 0.3); }
+    .task-item.completed::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: #2ed573; border-radius: 2px 0 0 2px; }
+    .task-header { display: flex; align-items: center; gap: 8px; }
+    .task-name { font-size: 12px; font-weight: 600; color: #ccc; flex: 1; line-height: 1.3; }
+    .task-item.completed .task-name { color: #2ed573; text-decoration: line-through; text-decoration-color: rgba(46, 213, 115, 0.4); }
+    .task-status-badge { font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 600; letter-spacing: 0.5px; flex-shrink: 0; }
+    .task-status-badge.done { background: rgba(46, 213, 115, 0.15); color: #2ed573; }
+    .task-status-badge.progress { background: rgba(249, 212, 35, 0.15); color: #f9d423; }
+    .task-anywhere { font-size: 9px; color: #666; margin-top: 4px; letter-spacing: 0.5px; }
+    .task-item.completed .task-anywhere { color: #5a9a6a; }
+    .task-magic-hint { font-size: 9px; color: #b8a030; margin-top: 2px; letter-spacing: 0.5px; }
+
+    .task-preview { display: inline-grid; gap: 2px; margin-top: 6px; margin-left: 2px; }
+    .task-preview-cell { width: 18px; height: 18px; border-radius: 3px; background: rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; }
+    .task-preview-cell.active { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15); }
+
+    /* ===== 拖拽幽灵 ===== */
+    .drag-ghost { position: fixed; pointer-events: none; z-index: 1000; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; border-radius: 12px; opacity: 0.9; transform: translate(-50%, -50%) scale(1.15); transition: none; }
+    .drag-ghost.magic-ghost { background: linear-gradient(135deg, #f9d423, #ff4e50, #a55eea, #45aaf2); background-size: 300% 300%; animation: magicShimmer 2s ease infinite; box-shadow: 0 6px 24px rgba(249, 212, 35, 0.5), 0 0 16px rgba(165, 94, 234, 0.4); color: #fff; text-shadow: 0 0 8px rgba(255,255,255,0.6); font-size: 24px; }
+
+    /* ===== 底部操作栏 ===== */
+    .actions { margin-top: 20px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; justify-content: center; }
+    .btn { padding: 10px 28px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 1px; transition: transform 0.2s, box-shadow 0.2s; }
+    .btn:hover { transform: translateY(-2px); } .btn:active { transform: translateY(0); }
+    .btn-reset { background: linear-gradient(135deg, #f9d423, #ff4e50); color: #fff; }
+    .btn-reset:hover { box-shadow: 0 4px 16px rgba(255, 78, 80, 0.4); }
+    .btn-solve { background: linear-gradient(135deg, #a55eea, #45aaf2); color: #fff; }
+    .btn-solve:hover { box-shadow: 0 4px 16px rgba(165, 94, 234, 0.4); }
+    .btn-solve:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-hint { background: linear-gradient(135deg, #2ed573, #0be881); color: #fff; min-width: 120px; position: relative; }
+    .btn-hint:hover:not(:disabled) { box-shadow: 0 4px 16px rgba(46, 213, 115, 0.4); }
+    .btn-hint:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+    .hint-timer { font-size: 11px; opacity: 0.85; margin-left: 4px; }
+
+    /* ===== 方向移动按钮 ===== */
+    .shift-group { display: flex; align-items: center; gap: 6px; }
+    .shift-pad { display: grid; grid-template-columns: repeat(3, 34px); grid-template-rows: repeat(3, 34px); gap: 3px; }
+    .shift-btn { width: 34px; height: 34px; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; background: rgba(255,255,255,0.08); color: #ccc; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, transform 0.15s; user-select: none; -webkit-user-select: none; padding: 0; }
+    .shift-btn:hover { background: rgba(255,255,255,0.15); transform: scale(1.08); }
+    .shift-btn:active { background: rgba(255,255,255,0.22); transform: scale(0.95); }
+    .shift-btn.shift-up { grid-column: 2; grid-row: 1; }
+    .shift-btn.shift-left { grid-column: 1; grid-row: 2; }
+    .shift-btn.shift-center { grid-column: 2; grid-row: 2; background: transparent; border-color: transparent; cursor: default; font-size: 11px; color: #555; }
+    .shift-btn.shift-center:hover { transform: none; background: transparent; }
+    .shift-btn.shift-right { grid-column: 3; grid-row: 2; }
+    .shift-btn.shift-down { grid-column: 2; grid-row: 3; }
+    .shift-label { font-size: 11px; color: #888; letter-spacing: 1px; writing-mode: vertical-rl; margin-left: 2px; }
+
+    /* ===== 动画 ===== */
+    @keyframes snapIn { 0% { transform: scale(1.25); opacity: 0.6; } 50% { transform: scale(0.92); } 100% { transform: scale(1); opacity: 1; } }
+    .grid-cell.snap-anim { animation: snapIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+    @keyframes victoryPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+    .victory-pulse { animation: victoryPulse 0.8s ease-in-out 3; }
+
+    /* ===== 胜利结算 ===== */
+    .victory-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+    .victory-overlay.show { opacity: 1; pointer-events: auto; }
+    .victory-title { font-size: 42px; font-weight: 800; letter-spacing: 6px; background: linear-gradient(90deg, #f9d423, #ff4e50, #f9d423); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: shimmer 2s linear infinite; margin-bottom: 8px; }
+    .victory-level-name { font-size: 16px; color: #aaa; margin-bottom: 28px; letter-spacing: 2px; }
+    .victory-btns { display: flex; gap: 18px; }
+    .victory-btn { padding: 14px 36px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: 2px; transition: transform 0.2s, box-shadow 0.2s; }
+    .victory-btn:hover { transform: translateY(-3px); }
+    .victory-btn-next { background: linear-gradient(135deg, #f9d423, #ff4e50); color: #fff; box-shadow: 0 4px 16px rgba(255, 78, 80, 0.35); }
+    .victory-btn-next:hover { box-shadow: 0 6px 24px rgba(255, 78, 80, 0.5); }
+    .victory-btn-levels { background: rgba(255, 255, 255, 0.1); color: #ccc; border: 1px solid rgba(255, 255, 255, 0.15); }
+    .victory-btn-levels:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .victory-btn-stay { background: rgba(46, 213, 115, 0.15); color: #2ed573; border: 1px solid rgba(46, 213, 115, 0.3); }
+    .victory-btn-stay:hover { box-shadow: 0 4px 16px rgba(46, 213, 115, 0.2); }
+
+    /* ===== 提示 ===== */
+    .toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-60px); padding: 10px 24px; border-radius: 10px; background: rgba(0, 0, 0, 0.75); color: #fff; font-size: 13px; letter-spacing: 1px; pointer-events: none; opacity: 0; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s; backdrop-filter: blur(8px); z-index: 3000; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ===== 提示高亮 ===== */
+    @keyframes hintPulse {
+      0%, 100% { box-shadow: 0 0 8px rgba(249, 212, 35, 0.5), inset 0 0 8px rgba(249, 212, 35, 0.2); }
+      50% { box-shadow: 0 0 20px rgba(249, 212, 35, 0.8), inset 0 0 12px rgba(249, 212, 35, 0.4); }
+    }
+    .grid-cell.hint-glow { animation: hintPulse 1s ease-in-out infinite; border-color: rgba(249, 212, 35, 0.6) !important; }
+
+    /* ===== 页面切换 ===== */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .page.active { animation: fadeIn 0.4s ease; }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== 主界面 ==================== -->
+  <div class="page active" id="pageHome">
+    <div class="home-title">Magicstone</div>
+    <p class="home-subtitle">Shape · Number · Strategy</p>
+    <div class="home-buttons">
+      <button class="home-btn home-btn-start" id="btnStart">开始游戏</button>
+      <button class="home-btn home-btn-rules" id="btnRules">规则说明</button>
+    </div>
+  </div>
+
+  <!-- ==================== 关卡选择 ==================== -->
+  <div class="page" id="pageLevels">
+    <div class="level-page-title">选 择 关 卡</div>
+    <div class="level-hint" style="max-width:620px;text-align:center;font-size:13px;color:#999;line-height:1.8;margin-bottom:24px;letter-spacing:0.5px;">难度星级仅代表大致难度，因人而异</div>
+    <div class="level-grid" id="levelGrid"></div>
+    <button class="nav-btn" id="btnLevelsBack">返回主界面</button>
+  </div>
+
+  <!-- ==================== 规则说明 ==================== -->
+  <div class="page" id="pageRules">
+    <div class="rules-container">
+      <div class="rules-title">游 戏 规 则</div>
+      <div class="rules-section"><h3>🎯 游戏目标</h3><p>将数字方块放入网格中，排列出指定的数字组合形状以完成所有挑战目标。</p></div>
+      <div class="rules-section"><h3>🎮 输入方式</h3>
+        <p><b>拖拽模式：</b></p>
+        <ul><li><b>放置数字</b>：从左侧数字库拖拽方块到网格格子</li><li><b>移动数字</b>：拖拽网格中已有数字到其他格子</li><li><b>归还数字</b>：将网格数字拖回数字库，或双击该数字</li></ul>
+        <p><b>点击模式：</b></p>
+        <ul><li><b>拾取数字</b>：单击数字库中的方块或网格中的数字，数字将跟随鼠标移动</li><li><b>放置数字</b>：再次单击目标格子即可放下</li><li><b>取消拾取</b>：右键点击或按 Esc 键取消</li></ul>
+        <p><b>键盘快捷键：</b></p>
+        <ul><li><b>输入数字</b>：鼠标悬停在格子上时，按 1~9 输入对应数字，按 0 输入魔石</li><li><b>清除格子</b>：鼠标悬停时按 Delete 或 Backspace 可清空该格</li><li><b>整体移动</b>：按 W/A/S/D 或方向键可移动网格中所有数字块</li></ul>
+      </div>
+      <div class="rules-section"><h3>📦 数字库存</h3><p>每个数字有使用数量限制，右上角徽章显示剩余数量。数字耗尽后将无法继续使用。</p></div>
+      <div class="rules-section"><h3>✨ 魔石</h3><p><span class="rules-magic">★ 魔石</span> 可被视为<b>任意数字</b>来完成通关条件。同一颗魔石在不同任务中可以同时代表不同数字。</p></div>
+      <div class="rules-section"><h3>🔀 整体移动</h3><p>使用方向按钮或键盘（WASD / 方向键）可同时移动网格中所有数字块，保持相对位置不变。</p></div>
+      <div class="rules-section"><h3>💡 提示与通关</h3><p>进入关卡后提示功能需要冷却等待。使用提示后会高亮一个魔石应放的位置。当至少使用过 1 次提示且所有魔石已正确就位时，将出现一键通关按钮并开始倒计时，倒计时结束后即可使用。重置关卡不会重置提示和通关的进度。</p></div>
+      <div class="rules-section"><h3>🏆 通关条件</h3><p>当所有挑战目标全部达成时，关卡通过。通关后可选择进入下一关或返回选关界面。</p></div>
+    </div>
+    <button class="nav-btn" id="btnRulesBack">返回主界面</button>
+  </div>
+
+  <!-- ==================== 游戏界面 ==================== -->
+  <div class="page" id="pageGame">
+    <div class="game-header">
+      <div class="game-title" id="gameLevelTitle">✦ 魔法石 ✦</div>
+      <button class="game-back-btn" id="btnGameBack">← 选关</button>
+    </div>
+    <p class="subtitle" id="gameSubtitle">拖拽数字方块至网格中，完成所有挑战目标</p>
+
+    <div class="main-container">
+      <div class="number-panel" id="numberPanel">
+        <div class="panel-title">数 字 库</div>
+        <div class="panel-hint">拖到数字库可归还</div>
+        <div class="number-block" data-num="1" draggable="true"><span class="num-badge" id="badge-1">0</span>1</div>
+        <div class="number-block" data-num="2" draggable="true"><span class="num-badge" id="badge-2">0</span>2</div>
+        <div class="number-block" data-num="3" draggable="true"><span class="num-badge" id="badge-3">0</span>3</div>
+        <div class="number-block" data-num="4" draggable="true"><span class="num-badge" id="badge-4">0</span>4</div>
+        <div class="number-block" data-num="5" draggable="true"><span class="num-badge" id="badge-5">0</span>5</div>
+        <div class="number-block" data-num="6" draggable="true"><span class="num-badge" id="badge-6">0</span>6</div>
+        <div class="number-block" data-num="7" draggable="true"><span class="num-badge" id="badge-7">0</span>7</div>
+        <div class="number-block" data-num="8" draggable="true"><span class="num-badge" id="badge-8">0</span>8</div>
+        <div class="number-block" data-num="9" draggable="true"><span class="num-badge" id="badge-9">0</span>9</div>
+        <div class="panel-divider"></div>
+        <div class="number-block magic-block" data-num="0" draggable="true"><span class="num-badge" id="badge-0">0</span>★</div>
+        <div class="magic-label">魔 石</div>
+      </div>
+
+      <div class="grid-wrapper">
+        <div class="grid-container" id="grid"></div>
+      </div>
+
+      <div class="task-panel" id="taskPanel">
+        <div class="task-panel-title">🎯 挑战目标</div>
+        <div class="task-panel-progress" id="taskProgress">0 / 0 已完成</div>
+        <div class="task-progress-bar"><div class="task-progress-fill" id="taskProgressFill" style="width: 0%"></div></div>
+        <div id="taskList"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="shift-group">
+        <div class="shift-pad">
+          <button class="shift-btn shift-up" data-dir="up">↑</button>
+          <button class="shift-btn shift-left" data-dir="left">←</button>
+          <div class="shift-btn shift-center">⊕</div>
+          <button class="shift-btn shift-right" data-dir="right">→</button>
+          <button class="shift-btn shift-down" data-dir="down">↓</button>
+        </div>
+        <div class="shift-label">整体移动</div>
+      </div>
+      <button class="btn btn-reset" id="resetBtn">重置关卡</button>
+      <button class="btn btn-hint" id="hintBtn" disabled>💡 提示 <span class="hint-timer" id="hintTimer">10s</span></button>
+      <button class="btn btn-solve" id="solveBtn" style="display:none;">一键通关</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="victory-overlay" id="victoryOverlay">
+    <div class="victory-title">✦ 通关成功 ✦</div>
+    <div class="victory-level-name" id="victoryLevelName"></div>
+    <div class="victory-btns">
+      <button class="victory-btn victory-btn-next" id="victoryBtnNext">进入下一关</button>
+      <button class="victory-btn victory-btn-stay" id="victoryBtnStay">保留</button>
+      <button class="victory-btn victory-btn-levels" id="victoryBtnLevels">返回选关</button>
+    </div>
+  </div>
+
+  <canvas id="bgCanvas"></canvas>
+  <div id="particleContainer" style="position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0;"></div>
+
+  <script>
+    const MAGIC_NUM = 0;
+
+    // ===== 页面切换 =====
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    // ===== 数字颜色 =====
+    const numColors = {
+      1: { bg: 'linear-gradient(135deg, #ff6b6b, #ee5a24)', shadow: 'rgba(238,90,36,0.45)', text: '#fff', solid: '#ee5a24' },
+      2: { bg: 'linear-gradient(135deg, #ffa502, #e67e22)', shadow: 'rgba(230,126,34,0.45)', text: '#fff', solid: '#e67e22' },
+      3: { bg: 'linear-gradient(135deg, #ffd32a, #f9ca24)', shadow: 'rgba(249,202,36,0.45)', text: '#333', solid: '#f9ca24' },
+      4: { bg: 'linear-gradient(135deg, #2ed573, #05c46b)', shadow: 'rgba(5,196,107,0.45)', text: '#fff', solid: '#05c46b' },
+      5: { bg: 'linear-gradient(135deg, #1abc9c, #0be881)', shadow: 'rgba(11,232,129,0.45)', text: '#fff', solid: '#0be881' },
+      6: { bg: 'linear-gradient(135deg, #45aaf2, #2d98da)', shadow: 'rgba(45,152,218,0.45)', text: '#fff', solid: '#2d98da' },
+      7: { bg: 'linear-gradient(135deg, #4b7bec, #3867d6)', shadow: 'rgba(56,103,214,0.45)', text: '#fff', solid: '#3867d6' },
+      8: { bg: 'linear-gradient(135deg, #a55eea, #8854d0)', shadow: 'rgba(136,84,208,0.45)', text: '#fff', solid: '#8854d0' },
+      9: { bg: 'linear-gradient(135deg, #fc5c65, #eb3b5a)', shadow: 'rgba(235,59,90,0.45)', text: '#fff', solid: '#eb3b5a' },
+    };
+
+    // ============================================================
+    //  关卡定义
+    //  rows/cols: 网格大小
+    //  inventory: { 0:魔石数, 1-9:数字数 }
+    //  tasks[].grid: 二维数组 (0=魔石通配占位, -1/null=忽略, 1-9=目标数字)
+    // ============================================================
+    const LEVELS = [
+      {
+        name: '新手练习1',
+        rows: 3, cols: 3,
+        inventory: { 1:3, 2:3, 3:2, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 0:1 },
+        tasks: [
+          { grid: [[1,1],[1,1]] },
+          { grid: [[2,2],[2,2]] },
+          { grid: [[3,-1,-1],[-1,3,-1],[-1,-1,3]] },
+        ]
+      },
+      {
+        name: '新手练习2',
+        rows: 4, cols: 4,
+        inventory: { 1:4, 2:4, 3:4, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 0:1 },
+        tasks: [
+          { grid: [[1,1],[1,-1],[1,1]] },
+          { grid: [[2,-1,-1],[2,2,2],[-1,2,-1]] },
+          { grid: [[3,3,3],[3,3,-1]] },
+        ]
+      },
+      {
+        name: '蝙蝠拍',
+        rows: 6, cols: 6,
+        inventory: { 1:7, 2:7, 3:2, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 0:2 },
+        tasks: [
+          { grid: [[1,1,1],[1,-1,1],[1,1,1]] },
+          { grid: [[2,2,2],[2,-1,2],[2,2,2]] },
+          { grid: [[-1,-1,-1,3],[-1,-1,3,-1],[-1,3,-1,-1],[3,-1,-1,-1]] },
+          { grid: [[2,-1,-1,-1,-1,-1],[-1,1,-1,-1,-1,-1],[-1,-1,2,-1,-1,-1],[-1,-1,-1,1,-1,-1],[-1,-1,-1,-1,2,-1],[-1,-1,-1,-1,-1,1]] },
+        ]
+      },
+      {
+        name: '蝙蝠',
+        rows: 5, cols: 9,
+        inventory: { 1:8, 2:8, 3:3, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 0:2 },
+        tasks: [
+          { grid: [[3,3,3],[-1,3,-1],[-1,3,-1]] },
+          { grid: [[-1,-1,-1,3],[-1,-1,1,-1],[2,1,-1,-1],[-1,2,-1,-1]] },
+          { grid: [[3,-1,-1,-1],[-1,1,-1,-1],[-1,-1,1,2],[-1,-1,2,-1]] },
+          { grid: [[-1,-1,2,-1],[3,1,1,2]] },
+          { grid: [[-1,2,-1,-1],[2,1,1,3]] },
+          { grid: [[-1,1,-1,1,-1],[2,1,2,1,2],[-1,2,-1,2,-1]] },
+          { grid: [[-1,-1,-1,-1,2],[-1,-1,-1,1,-1],[-1,-1,1,-1,-1],[-1,1,-1,-1,-1],[2,-1,-1,-1,-1]] },
+          { grid: [[2,-1,-1,-1,-1],[-1,1,-1,-1,-1],[-1,-1,1,-1,-1],[-1,-1,-1,1,-1],[-1,-1,-1,-1,2]] },
+          { grid: [[1,-1,-1,-1,1],[-1,-1,-1,-1,-1],[2,-1,-1,-1,2]] },
+        ]
+      },
+      {
+        name: '分离的演习',
+        rows: 7, cols: 7,
+        inventory: { 1:3, 2:3, 3:3, 4:3, 5:3, 6:3, 7:3, 8:3, 9:0, 0:2 },
+        tasks: [
+          { grid: [[-1,1,-1,-1,-1],[1,1,-1,2,2],[-1,-1,-1,2,-1]] },
+          { grid: [[-1,3,-1],[-1,3,3],[-1,-1,-1],[4,4,-1],[-1,4,-1]] },
+          { grid: [[-1,-1,-1,8,-1],[7,7,-1,8,8],[-1,7,-1,-1,-1]] },
+          { grid: [[-1,5,-1],[5,5,-1],[-1,-1,-1],[-1,6,6],[-1,6,-1]] },
+          { grid: [[7,7,-1,8,6,4,2]] },
+          { grid: [[6],[7],[8]] },
+          { grid: [[9],[6]] },
+          { grid: [[-1,3,-1],[8,-1,3],[-1,8,-1]] },
+          { grid: [[-1,-1,4,-1],[5,-1,-1,-1],[-1,-1,-1,3],[-1,6,-1,-1]] },
+        ]
+      },
+      {
+        name: '花之舞',
+        rows: 6, cols: 6,
+        inventory: { 1:4, 2:4, 3:4, 4:4, 5:4, 6:2, 7:2, 8:3, 9:0, 0:3 },
+        tasks: [
+          { grid: [[-1,1,-1],[1,-1,1],[1,-1,1]] },
+          { grid: [[-1,2,2],[2,-1,-1],[-1,2,2]] },
+          { grid: [[3,-1,3],[3,-1,3],[-1,3,-1]] },
+          { grid: [[4,4,-1],[-1,-1,4],[4,4,-1]] },
+          { grid: [[-1,5,-1],[5,5,5],[-1,5,-1]] },
+          { grid: [[-1,-1,6,-1],[6,-1,-1,-1],[-1,-1,-1,6],[-1,6,-1,-1]] },
+          { grid: [[-1,7,-1,-1],[-1,-1,-1,7],[7,-1,-1,-1],[-1,-1,7,-1]] },
+          { grid: [[8,-1,-1,8],[-1,-1,-1,-1],[-1,-1,-1,-1],[8,-1,-1,8]] },
+          { grid: [[-1,-1,4,-1,-1],[-1,3,2,1,-1],[7,-1,6,-1,5]] },
+        ]
+      },
+      {
+        name: '积木',
+        rows: 6, cols: 6,
+        inventory: { 1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:0, 9:0, 0:1 },
+        tasks: [
+          { grid: [[2,-1,-1,2]] },
+          { grid: [[3,3],[-1,3]] },
+          { grid: [[-1,4],[4,4],[4,-1]] },
+          { grid: [[5,-1,5],[-1,5,-1],[5,-1,5]] },
+          { grid: [[6,6,6],[-1,-1,6],[-1,6,6]] },
+          { grid: [[7,-1,7,-1,7],[-1,-1,7,-1,-1],[7,-1,-1,-1,7],[-1,-1,7,-1,-1]] },
+          { grid: [[5,4,-1,-1,-1],[-1,-1,3,-1,-1],[6,-1,-1,2,-1],[-1,-1,-1,-1,1],[7,-1,-1,-1,-1]] },
+        ]
+      },
+      {
+        name: '连通块',
+        rows: 7, cols: 7,
+        inventory: { 1:4, 2:8, 3:4, 4:1, 5:1, 6:1, 7:1, 8:1, 9:0, 0:4 },
+        tasks: [
+          { grid: [[-1,1,-1],[2,4,2],[-1,4,-1]] },
+          { grid: [[-1,8,-1],[2,8,2],[-1,1,-1]] },
+          { grid: [[-1,2,-1],[1,7,7],[-1,2,-1]] },
+          { grid: [[-1,2,-1],[6,6,1],[-1,2,-1]] },
+          { grid: [[3,-1,-1],[2,3,-1],[-1,2,3]] },
+          { grid: [[-1,-1,3,-1,-1],[-1,3,-1,3,-1],[1,-1,-1,-1,1]] },
+          { grid: [[2,-1,-1,-1,2],[-1,3,-1,3,-1],[-1,-1,3,-1,-1]] },
+          { grid: [[1,-1,-1,-1],[2,2,-1,-1],[-1,3,2,-1],[-1,-1,2,1]] },
+          { grid: [[-1,-1,3,1],[-1,3,2,-1],[3,2,-1,-1],[1,-1,-1,-1]] },
+          { grid: [[-1,-1,-1,1],[-1,-1,2,1],[-1,2,3,-1],[1,1,-1,-1]] },
+        ]
+      },
+      {
+        name: '圣剑',
+        rows: 5, cols: 7,
+        inventory: { 1:4, 2:4, 3:4, 4:2, 5:1, 6:1, 7:4, 8:0, 9:0, 0:4 },
+        tasks: [
+          { grid: [[-1,1,-1],[-1,1,-1],[1,1,1],[-1,1,-1]] },
+          { grid: [[3,3,3],[3,-1,3],[3,-1,3]] },
+          { grid: [[-1,5,-1],[5,2,5]] },
+          { grid: [[-1,6,-1],[6,2,6]] },
+          { grid: [[-1,-1,2,-1,-1],[-1,-1,-1,-1,-1],[2,2,-1,2,2],[-1,2,2,2,-1]] },
+          { grid: [[7,-1,7],[-1,7,-1],[7,-1,7]] },
+          { grid: [[7,3,7,3,7]] },
+          { grid: [[-1,-1,-1,4],[-1,-1,3,-1],[-1,2,-1,-1],[1,-1,-1,-1]] },
+          { grid: [[-1,-1,-1,4],[-1,-1,5,-1],[-1,6,-1,-1],[7,-1,-1,-1]] },
+          { grid: [[4,-1,-1,-1],[-1,3,-1,-1],[-1,-1,2,-1],[-1,-1,-1,1]] },
+          { grid: [[4,-1,-1,-1],[-1,5,-1,-1],[-1,-1,6,-1],[-1,-1,-1,7]] },
+        ]
+      },
+      {
+        name: '顺子',
+        rows: 7, cols: 7,
+        inventory: { 1:0, 2:0, 3:2, 4:2, 5:5, 6:6, 7:4, 8:2, 9:0, 0:4 },
+        tasks: [
+          { grid: [[8,7,6,5,4]] },
+          { grid: [[4,5,6,7,8]] },
+          { grid: [[3,4,5],[-1,7,6]] },
+          { grid: [[5,4],[6,7],[-1,8]] },
+          { grid: [[4,7,8],[5,6,-1]] },
+          { grid: [[3,-1],[7,4],[6,5]] },
+          { grid: [[4],[5],[6],[7],[8]] },
+          { grid: [[8],[7],[6],[5],[4]] },
+          { grid: [[7,-1,-1,-1,-1],[-1,6,-1,-1,-1],[-1,-1,5,-1,-1],[-1,-1,-1,4,-1],[-1,-1,-1,-1,3]] },
+          { grid: [[-1,-1,-1,-1,7],[-1,-1,-1,6,-1],[-1,-1,5,-1,-1],[-1,4,-1,-1,-1],[3,-1,-1,-1,-1]] },
+        ]
+      },
+      {
+        name: '它们像花儿一样',
+        rows: 5, cols: 5,
+        inventory: { 1:6, 2:4, 3:4, 4:4, 5:0, 6:0, 7:0, 8:0, 9:0, 0:2 },
+        tasks: [
+          { grid: [[-1,-1,3,-1],[2,-1,-1,-1],[-1,-1,-1,4],[-1,1,-1,-1]] },
+          { grid: [[-1,4,-1,-1],[-1,-1,-1,1],[3,-1,-1,-1],[-1,-1,2,-1]] },
+          { grid: [[-1,-1,1,-1],[4,-1,-1,-1],[-1,-1,-1,2],[-1,3,-1,-1]] },
+          { grid: [[-1,2,-1,-1],[-1,-1,-1,3],[1,-1,-1,-1],[-1,-1,4,-1]] },
+          { grid: [[-1,4,-1,-1],[-1,-1,-1,1],[4,-1,-1,-1],[-1,-1,1,-1]] },
+          { grid: [[-1,1,-1,-1],[-1,-1,-1,4],[1,-1,-1,-1],[-1,-1,4,-1]] },
+          { grid: [[-1,-1,2,-1],[2,-1,-1,-1],[-1,-1,-1,1],[-1,1,-1,-1]] },
+          { grid: [[-1,-1,1,-1],[1,-1,-1,-1],[-1,-1,-1,2],[-1,2,-1,-1]] },
+        ]
+      },
+      {
+        name: '太极',
+        rows: 7, cols: 7,
+        inventory: { 1:4, 2:4, 3:4, 4:2, 5:4, 6:4, 7:2, 8:0, 9:0, 0:1 },
+        tasks: [
+          { grid: [[7,-1,-1,7,-1,-1,7]] },
+          { grid: [[4],[-1],[-1],[4],[-1],[-1],[4]] },
+          { grid: [[6,-1,6],[6,-1,6]] },
+          { grid: [[5,5],[-1,-1],[5,5]] },
+          { grid: [[4],[5],[6],[7]] },
+          { grid: [[7,6,5,4]] },
+          { grid: [[-1,-1,3,4,3,-1,-1],[-1,2,-1,-1,-1,2,-1],[1,-1,-1,-1,-1,-1,1]] },
+          { grid: [[1,-1,-1,-1,-1,-1,1],[-1,2,-1,-1,-1,2,-1],[-1,-1,3,4,3,-1,-1]] },
+          { grid: [[-1,-1,6],[-1,5,2],[6,1,-1],[2,-1,-1]] },
+          { grid: [[7,-1,-1,-1],[1,6,-1,-1],[-1,2,5,-1],[-1,-1,3,4]] },
+          { grid: [[-1,-1,3,4],[-1,2,5,-1],[1,6,-1,-1],[7,-1,-1,-1]] },
+        ]
+      },
+      {
+        name: '压缩包',
+        rows: 9, cols: 9,
+        inventory: { 1:9, 2:9, 3:9, 4:9, 5:9, 6:9, 7:9, 8:9, 9:0, 0:7 },
+        tasks: [
+          { grid: [[1],[1],[1],[1],[1]] },
+          { grid: [[2,2,2],[-1,-1,2],[2,2,2],[2,-1,-1],[2,2,2]] },
+          { grid: [[3,3,3],[-1,-1,3],[3,3,3],[-1,-1,3],[3,3,3]] },
+          { grid: [[4,-1,4],[4,-1,4],[4,4,4],[-1,-1,4],[-1,-1,4]] },
+          { grid: [[5,5,5],[5,-1,-1],[5,5,5],[-1,-1,5],[5,5,5]] },
+          { grid: [[6,6,6],[6,-1,-1],[6,6,6],[6,-1,6],[6,6,6]] },
+          { grid: [[7,7,7],[-1,-1,7],[-1,-1,7],[-1,-1,7],[-1,-1,7]] },
+          { grid: [[8,8,8],[8,-1,8],[8,8,8],[8,-1,8],[8,8,8]] },
+        ]
+      },
+      {
+        name: '鱼',
+        rows: 6, cols: 6,
+        inventory: { 1:4, 2:4, 3:0, 4:4, 5:4, 6:4, 7:0, 8:0, 9:0, 0:6 },
+        tasks: [
+          { grid: [[2,-1,-1,5],[-1,6,5,-1],[-1,1,1,2],[1,-1,2,2]] },
+          { grid: [[1,1,-1,4],[1,2,4,-1],[-1,2,6,-1],[2,-1,-1,1]] },
+          { grid: [[1,1,5],[5,5,2],[5,5,2]] },
+          { grid: [[5,5,-1],[5,6,4],[-1,4,4]] },
+          { grid: [[1,1,4],[1,4,2],[4,2,2]] },
+          { grid: [[-1,1,1],[1,1,1],[-1,1,-1]] },
+          { grid: [[-1,2,2],[2,2,2],[-1,2,-1]] },
+          { grid: [[-1,6,6],[6,6,6],[-1,6,-1]] },
+          { grid: [[-1,4,4],[4,4,4],[-1,4,-1]] },
+          { grid: [[-1,5,5],[5,5,5],[-1,5,-1]] },
+        ]
+      },
+      {
+        name: '原初',
+        rows: 5, cols: 5,
+        inventory: { 1:5, 2:3, 3:2, 4:3, 5:3, 6:1, 7:1, 8:0, 9:0, 0:3 },
+        tasks: [
+          { grid: [[1,1,1,1],[-1,-1,-1,1],[-1,-1,-1,1],[-1,-1,-1,1]] },
+          { grid: [[7,7]] },
+          { grid: [[2,2],[1,2]] },
+          { grid: [[6],[6]] },
+          { grid: [[5,5],[2,5]] },
+          { grid: [[-1,7],[3,-1]] },
+          { grid: [[-1,-1,-1,4],[4,4,4,-1]] },
+          { grid: [[3,-1],[-1,4]] },
+        ]
+      },
+      {
+        name: '轴对称',
+        rows: 6, cols: 6,
+        inventory: { 1:4, 2:4, 3:4, 4:4, 5:0, 6:0, 7:0, 8:0, 9:0, 0:3 },
+        tasks: [
+          { grid: [[1,2,3,1,2,3]] },
+          { grid: [[3,4],[4,4]] },
+          { grid: [[1],[2],[3],[1],[2],[3]] },
+          { grid: [[4,4],[4,3]] },
+          { grid: [[1,-1,1],[-1,-1,-1],[1,-1,1]] },
+          { grid: [[2,-1,2],[-1,-1,-1],[2,-1,2]] },
+          { grid: [[3,-1,-1,-1,-1],[-1,3,-1,-1,-1],[-1,-1,3,-1,-1],[-1,-1,-1,3,-1],[-1,-1,-1,-1,3]] },
+          { grid: [[4,1],[3,2]] },
+          { grid: [[4,3],[1,2]] },
+          { grid: [[1,2],[3,4]] },
+          { grid: [[1,3],[2,4]] },
+        ]
+      },
+    ];
+
+    // ===== 按难度排序关卡 =====
+    {
+      const calcD = (l) => {
+        const m = l.inventory[MAGIC_NUM] || 0;
+        const t = l.tasks.length;
+        const s = Math.min(l.rows, l.cols);
+        const p = m * t * s;
+        if (p <= 0) return 1;
+        const raw = Math.log(p) / Math.log(3);
+        const mapped = 1 + (raw - 2) / (5.66 - 2) * 9;
+        return Math.max(1, Math.min(10, Math.floor(mapped)));
+      };
+      LEVELS.sort((a, b) => calcD(a) - calcD(b));
+    }
+
+    // ===== 关卡进度 =====
+    let levelUnlocked = LEVELS.map(() => true);
+    let levelCompleted = LEVELS.map(() => false);
+
+    try {
+      const saved = JSON.parse(localStorage.getItem('magicStoneProgress6'));
+      if (saved && saved.unlocked && saved.completed && saved.unlocked.length === LEVELS.length) { levelUnlocked = saved.unlocked; levelCompleted = saved.completed; }
+    } catch(e) {}
+
+    function saveProgress() {
+      try { localStorage.setItem('magicStoneProgress6', JSON.stringify({ unlocked: levelUnlocked, completed: levelCompleted })); } catch(e) {}
+    }
+
+    // ===== 难度计算 =====
+    function calcDifficulty(level) {
+      const magicCount = level.inventory[MAGIC_NUM] || 0;
+      const taskCount = level.tasks.length;
+      const minSide = Math.min(level.rows, level.cols);
+      const product = magicCount * taskCount * minSide;
+      if (product <= 0) return 1;
+      const raw = Math.log(product) / Math.log(3);
+      const mapped = 1 + (raw - 2) / (5.66 - 2) * 9;
+      const d = Math.floor(mapped);
+      return Math.max(1, Math.min(10, d));
+    }
+
+    const difficultyStars = (d) => '★'.repeat(d) + '☆'.repeat(10 - d);
+
+    // ===== 渲染关卡选择 =====
+    function renderLevelGrid() {
+      const grid = document.getElementById('levelGrid');
+      grid.innerHTML = '';
+      LEVELS.forEach((level, i) => {
+        const card = document.createElement('div');
+        const unlocked = levelUnlocked[i];
+        const completed = levelCompleted[i];
+        card.className = 'level-card' + (!unlocked ? ' locked' : '') + (completed ? ' completed' : '');
+        let statusHTML = '';
+        if (completed) statusHTML = '<div class="level-status done">✓ 已通关</div>';
+        else if (unlocked) statusHTML = '<div class="level-status open">可挑战</div>';
+        else statusHTML = '<div class="level-status open">可挑战</div>';
+
+        card.innerHTML = `
+          <div class="level-num">${i + 1}</div>
+          <div class="level-label">${level.name}</div>
+          <div class="level-size">${level.cols}×${level.rows}</div>
+          <div class="level-difficulty d${calcDifficulty(level)}">难度 ${difficultyStars(calcDifficulty(level))}</div>
+          ${statusHTML}
+        `;
+        if (unlocked) {
+          card.addEventListener('click', () => { loadLevel(i); showPage('pageGame'); });
+        }
+        grid.appendChild(card);
+      });
+    }
+
+    // ===== 按钮事件 =====
+    document.getElementById('btnStart').addEventListener('click', () => { renderLevelGrid(); showPage('pageLevels'); });
+    document.getElementById('btnRules').addEventListener('click', () => showPage('pageRules'));
+    document.getElementById('btnLevelsBack').addEventListener('click', () => showPage('pageHome'));
+    document.getElementById('btnRulesBack').addEventListener('click', () => showPage('pageHome'));
+    document.getElementById('btnGameBack').addEventListener('click', () => { renderLevelGrid(); showPage('pageLevels'); });
+
+    // ===== 网格系统 =====
+    const gridEl = document.getElementById('grid');
+    const numberPanelEl = document.getElementById('numberPanel');
+    let cells = [];  // 当前网格格子数组
+    let gridRows = 0, gridCols = 0, cellSize = 52;
+
+    // 全局防拖拽导航：阻止浏览器默认的拖拽导航行为（防止回退/前进）
+    document.addEventListener('dragover', (e) => e.preventDefault());
+    document.addEventListener('drop', (e) => e.preventDefault());
+
+    function rebuildGrid(rows, cols) {
+      gridEl.innerHTML = '';
+      cells = [];
+      gridRows = rows;
+      gridCols = cols;
+
+      // 根据网格大小自适应格子尺寸
+      const maxGridPx = 520;
+      cellSize = Math.min(52, Math.floor((maxGridPx - 32 - (cols - 1) * 4) / cols));
+      cellSize = Math.max(32, cellSize);
+
+      gridEl.style.gridTemplateColumns = `repeat(${cols}, ${cellSize}px)`;
+      gridEl.style.gridTemplateRows = `repeat(${rows}, ${cellSize}px)`;
+
+      const fontSize = Math.max(14, cellSize * 0.42);
+
+      for (let i = 0; i < rows * cols; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.style.width = cellSize + 'px';
+        cell.style.height = cellSize + 'px';
+        cell.style.fontSize = fontSize + 'px';
+        cell.dataset.index = i;
+        cell.dataset.num = '';
+        // 不再默认设为draggable，仅filled时才设
+        gridEl.appendChild(cell);
+        cells.push(cell);
+      }
+    }
+
+    // ===== 拖拽状态 =====
+    let dragNum = null, ghostEl = null, highlightedCell = null;
+    let isDraggingFromGrid = false, dragSourceCell = null, dropHandled = false;
+
+    // ===== 格子渲染 =====
+    function applyCellColor(cell, num) {
+      const fontSize = Math.max(14, cellSize * 0.42);
+      const magicFontSize = Math.max(16, cellSize * 0.48);
+      if (num === MAGIC_NUM) {
+        cell.style.background = ''; cell.style.boxShadow = ''; cell.style.color = '';
+        cell.textContent = '★';
+        cell.style.fontSize = magicFontSize + 'px';
+        cell.dataset.num = String(MAGIC_NUM);
+        cell.classList.add('filled', 'magic-cell', 'return-hint');
+      } else {
+        const c = numColors[num]; if (!c) return;
+        cell.classList.remove('magic-cell');
+        cell.style.background = c.bg;
+        cell.style.boxShadow = `0 2px 12px ${c.shadow}`;
+        cell.style.color = c.text;
+        cell.style.fontSize = fontSize + 'px';
+        cell.textContent = num;
+        cell.dataset.num = String(num);
+        cell.classList.add('filled', 'return-hint');
+      }
+      cell.setAttribute('draggable', 'true');
+    }
+
+    function clearCellColor(cell) {
+      cell.style.background = ''; cell.style.boxShadow = ''; cell.style.color = '';
+      cell.textContent = ''; cell.dataset.num = '';
+      cell.classList.remove('filled', 'return-hint', 'magic-cell', 'hint-glow');
+      cell.setAttribute('draggable', 'false');
+    }
+
+    // ===== 库存系统 =====
+    let numInventory = {}, initialInventory = {};
+
+    function returnToInventory(num) { numInventory[num] = (numInventory[num] || 0) + 1; updateNumberPanel(); }
+    function takeFromInventory(num) { if ((numInventory[num] || 0) <= 0) return false; numInventory[num]--; updateNumberPanel(); return true; }
+
+    function updateNumberPanel() {
+      for (let n = 1; n <= 9; n++) {
+        const block = document.querySelector(`.number-block[data-num="${n}"]`);
+        const badge = document.getElementById(`badge-${n}`);
+        const remaining = numInventory[n] || 0;
+        badge.textContent = remaining;
+        // 隐藏库存为0且从未分配的数字
+        const allocated = initialInventory[n] || 0;
+        if (allocated <= 0) { block.classList.add('hidden-num'); }
+        else { block.classList.remove('hidden-num'); }
+        if (remaining <= 0 && allocated > 0) { block.classList.add('depleted'); badge.classList.add('zero'); }
+        else { block.classList.remove('depleted'); badge.classList.remove('zero'); }
+      }
+      const magicBlock = document.querySelector('.magic-block');
+      const magicBadge = document.getElementById('badge-0');
+      const magicRemaining = numInventory[MAGIC_NUM] || 0;
+      const magicAllocated = initialInventory[MAGIC_NUM] || 0;
+      magicBadge.textContent = magicRemaining;
+      if (magicAllocated <= 0) { magicBlock.classList.add('hidden-num'); }
+      else { magicBlock.classList.remove('hidden-num'); }
+      if (magicRemaining <= 0 && magicAllocated > 0) { magicBlock.classList.add('depleted'); magicBadge.classList.add('zero'); }
+      else { magicBlock.classList.remove('depleted'); magicBadge.classList.remove('zero'); }
+    }
+
+    // ===== 幽灵 =====
+    function createGhost(num, x, y) {
+      ghostEl = document.createElement('div');
+      ghostEl.className = 'drag-ghost';
+      if (num === MAGIC_NUM) {
+        ghostEl.classList.add('magic-ghost'); ghostEl.textContent = '★';
+      } else {
+        const c = numColors[num];
+        ghostEl.textContent = num;
+        ghostEl.style.background = c.bg;
+        ghostEl.style.boxShadow = `0 6px 20px ${c.shadow}`;
+        ghostEl.style.color = c.text;
+      }
+      document.body.appendChild(ghostEl);
+      moveGhost(x, y);
+    }
+    function moveGhost(x, y) { if (!ghostEl) return; ghostEl.style.left = x + 'px'; ghostEl.style.top = y + 'px'; }
+    function removeGhost() { if (ghostEl) { ghostEl.remove(); ghostEl = null; } }
+
+    // ===== 高亮 =====
+    function highlightTarget(x, y) { clearHighlight(); const el = document.elementFromPoint(x, y); if (el && el.classList.contains('grid-cell')) { el.classList.add('highlight'); highlightedCell = el; } }
+    function clearHighlight() { if (highlightedCell) { highlightedCell.classList.remove('highlight'); highlightedCell = null; } }
+    function isOverNumberPanel(x, y) { const rect = numberPanelEl.getBoundingClientRect(); return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom; }
+    function highlightNumberPanel(on) { numberPanelEl.classList.toggle('highlight-return', on); }
+
+    // ===== 放置/归还 =====
+    function placeNumber(cell, num, fromPanel) {
+      applyCellColor(cell, num);
+      cell.classList.remove('highlight'); cell.classList.add('snap-anim');
+      setTimeout(() => cell.classList.remove('snap-anim'), 300);
+      if (fromPanel) takeFromInventory(num);
+      checkAllTasks();
+    }
+
+    function returnNumberToInventory(num) {
+      returnToInventory(num);
+      showToast(`${num === MAGIC_NUM ? '魔石' : num} 已归还数字库`);
+      checkAllTasks();
+    }
+
+    function getCellNum(cell) {
+      if (!cell || !cell.classList.contains('filled')) return -1;
+      return parseInt(cell.dataset.num);
+    }
+
+    function getGridNum(row, col) {
+      if (row < 0 || row >= gridRows || col < 0 || col >= gridCols) return -1;
+      return getCellNum(cells[row * gridCols + col]);
+    }
+
+    // ===== 点击拾取-放置模式 =====
+    let pickingNum = null;        // 当前拾取的数字（null=未拾取）
+    let pickingFromGrid = false;  // 是否从网格拾取
+    let pickingSourceCell = null; // 从网格拾取时的源格子
+    let mouseFollowActive = false;// ghost是否正在跟随鼠标
+
+    function startPickFromPanel(num) {
+      if ((numInventory[num] || 0) <= 0) { showToast(`${num === MAGIC_NUM ? '魔石' : num} 已耗尽`); return; }
+      cancelPick(); // 清理旧状态
+      pickingNum = num; pickingFromGrid = false; pickingSourceCell = null;
+      mouseFollowActive = true;
+      createGhost(num, lastMouseX, lastMouseY);
+      document.body.style.cursor = 'none';
+    }
+
+    function startPickFromGrid(cell) {
+      if (!cell || !cell.classList.contains('filled')) return;
+      const num = getCellNum(cell);
+      cancelPick();
+      pickingNum = num; pickingFromGrid = true; pickingSourceCell = cell;
+      clearCellColor(cell);
+      mouseFollowActive = true;
+      createGhost(num, lastMouseX, lastMouseY);
+      document.body.style.cursor = 'none';
+    }
+
+    function cancelPick() {
+      if (pickingFromGrid && pickingSourceCell && pickingNum !== null) {
+        // 归还到源格子
+        applyCellColor(pickingSourceCell, pickingNum);
+      }
+      pickingNum = null; pickingFromGrid = false; pickingSourceCell = null;
+      if (mouseFollowActive) {
+        removeGhost(); clearHighlight(); highlightNumberPanel(false);
+        document.body.style.cursor = '';
+        mouseFollowActive = false;
+      }
+    }
+
+    function placePick(targetCell) {
+      if (pickingNum === null || !targetCell) return;
+      if (!pickingFromGrid && (numInventory[pickingNum] || 0) <= 0) {
+        showToast(`${pickingNum === MAGIC_NUM ? '魔石' : pickingNum} 已耗尽`);
+        cancelPick();
+        return;
+      }
+      // 如果目标格子已有数字，先归还
+      if (targetCell.classList.contains('filled')) {
+        returnToInventory(getCellNum(targetCell));
+      }
+      placeNumber(targetCell, pickingNum, !pickingFromGrid);
+      // 放置成功，清理状态
+      pickingNum = null; pickingFromGrid = false; pickingSourceCell = null;
+      removeGhost(); clearHighlight(); highlightNumberPanel(false);
+      document.body.style.cursor = '';
+      mouseFollowActive = false;
+    }
+
+    // 追踪鼠标位置（ghost跟随用）
+    let lastMouseX = 0, lastMouseY = 0;
+    document.addEventListener('mousemove', (e) => {
+      lastMouseX = e.clientX; lastMouseY = e.clientY;
+      if (mouseFollowActive) {
+        moveGhost(e.clientX, e.clientY);
+        // 高亮目标格子
+        if (ghostEl) ghostEl.style.display = 'none';
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        if (ghostEl) ghostEl.style.display = '';
+        const cell = el ? el.closest('.grid-cell') : null;
+        clearHighlight();
+        if (cell) cell.classList.add('highlight'), highlightedCell = cell;
+        // 检查是否在数字面板上
+        if (!pickingFromGrid) highlightNumberPanel(false);
+        else highlightNumberPanel(isOverNumberPanel(e.clientX, e.clientY));
+      }
+    });
+
+    // 点击数字面板数字块 → 拾取
+    document.addEventListener('click', (e) => {
+      if (!document.getElementById('pageGame').classList.contains('active')) return;
+      if (gameWon) return;
+
+      const block = e.target.closest('.number-block:not(.hidden-num)');
+      if (block) {
+        const num = parseInt(block.dataset.num);
+        if (mouseFollowActive && pickingNum === num && !pickingFromGrid) {
+          // 再次点击同一数字 → 取消
+          cancelPick();
+        } else {
+          startPickFromPanel(num);
+        }
+        return;
+      }
+
+      // 点击网格格子
+      const cell = e.target.closest('.grid-cell');
+      if (cell) {
+        if (mouseFollowActive) {
+          // 拾取状态下点击网格 → 放置
+          placePick(cell);
+        } else {
+          // 非拾取状态下点击已填充格子 → 拾取
+          if (cell.classList.contains('filled')) {
+            startPickFromGrid(cell);
+          }
+        }
+        return;
+      }
+
+      // 点击数字面板区域（归还）
+      if (mouseFollowActive && isOverNumberPanel(e.clientX, e.clientY) && pickingFromGrid) {
+        returnNumberToInventory(pickingNum);
+        pickingNum = null; pickingFromGrid = false; pickingSourceCell = null;
+        removeGhost(); clearHighlight(); highlightNumberPanel(false);
+        document.body.style.cursor = '';
+        mouseFollowActive = false;
+        return;
+      }
+
+      // 点击其他空白区域 → 取消拾取
+      if (mouseFollowActive) {
+        cancelPick();
+      }
+    });
+
+    // 右键/ESC取消拾取
+    document.addEventListener('contextmenu', (e) => {
+      if (mouseFollowActive) { e.preventDefault(); cancelPick(); }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && mouseFollowActive) { cancelPick(); }
+    });
+
+    // ===== 拖拽事件绑定 =====
+    function bindDragEvents() {
+      document.querySelectorAll('.number-block:not(.hidden-num)').forEach(block => {
+        block.addEventListener('dragstart', onPanelDragStart);
+        block.addEventListener('dragend', onPanelDragEnd);
+      });
+    }
+
+    function onPanelDragStart(e) {
+      if (mouseFollowActive) cancelPick(); // 拖拽时取消拾取
+      const num = parseInt(this.dataset.num);
+      if ((numInventory[num] || 0) <= 0) { e.preventDefault(); return; }
+      e.stopPropagation();
+      dragNum = num; isDraggingFromGrid = false; dragSourceCell = null; dropHandled = false;
+      this.classList.add('dragging');
+      const img = new Image(); img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+      e.dataTransfer.setDragImage(img, 0, 0); e.dataTransfer.effectAllowed = 'copy';
+      createGhost(dragNum, e.clientX, e.clientY);
+    }
+
+    function onPanelDragEnd() {
+      this.classList.remove('dragging');
+      removeGhost(); clearHighlight(); highlightNumberPanel(false);
+      dragNum = null; isDraggingFromGrid = false; dragSourceCell = null; dropHandled = false;
+    }
+
+    gridEl.addEventListener('dragstart', (e) => {
+      if (mouseFollowActive) cancelPick(); // 拖拽时取消拾取
+      const cell = e.target.closest('.grid-cell');
+      if (!cell || !cell.classList.contains('filled')) { e.preventDefault(); return; }
+      e.stopPropagation();
+      dragNum = getCellNum(cell); isDraggingFromGrid = true; dragSourceCell = cell; dropHandled = false;
+      const img = new Image(); img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+      e.dataTransfer.setDragImage(img, 0, 0); e.dataTransfer.effectAllowed = 'move';
+      createGhost(dragNum, e.clientX, e.clientY);
+      setTimeout(() => clearCellColor(cell), 0);
+    });
+
+    gridEl.addEventListener('dragend', () => {
+      removeGhost(); clearHighlight(); highlightNumberPanel(false);
+      if (!dropHandled && isDraggingFromGrid && dragSourceCell && dragNum !== null) applyCellColor(dragSourceCell, dragNum);
+      dragNum = null; isDraggingFromGrid = false; dragSourceCell = null; dropHandled = false;
+    });
+
+    gridEl.addEventListener('dragover', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      e.dataTransfer.dropEffect = isDraggingFromGrid ? 'move' : 'copy';
+      moveGhost(e.clientX, e.clientY); highlightTarget(e.clientX, e.clientY); highlightNumberPanel(false);
+    });
+    gridEl.addEventListener('dragleave', (e) => { if (!gridEl.contains(e.relatedTarget)) clearHighlight(); });
+
+    gridEl.addEventListener('drop', (e) => {
+      e.preventDefault(); e.stopPropagation(); if (dragNum === null) return;
+      // 临时隐藏ghost以便elementFromPoint能正确找到目标
+      if (ghostEl) ghostEl.style.display = 'none';
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (ghostEl) ghostEl.style.display = '';
+      const cell = el ? el.closest('.grid-cell') : null;
+      if (cell) {
+        if (!isDraggingFromGrid && (numInventory[dragNum] || 0) <= 0) { showToast(`${dragNum === MAGIC_NUM ? '魔石' : dragNum} 已耗尽`); removeGhost(); clearHighlight(); dragNum = null; isDraggingFromGrid = false; dragSourceCell = null; dropHandled = false; return; }
+        if (cell.classList.contains('filled')) returnToInventory(getCellNum(cell));
+        placeNumber(cell, dragNum, !isDraggingFromGrid); dropHandled = true;
+      } else if (isDraggingFromGrid && dragSourceCell) { applyCellColor(dragSourceCell, dragNum); dropHandled = true; }
+      removeGhost(); clearHighlight(); dragNum = null; isDraggingFromGrid = false; dragSourceCell = null; dropHandled = false;
+    });
+
+    numberPanelEl.addEventListener('dragover', (e) => { if (isDraggingFromGrid && dragNum !== null) { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move'; moveGhost(e.clientX, e.clientY); highlightNumberPanel(true); clearHighlight(); } });
+    numberPanelEl.addEventListener('dragleave', (e) => { if (!numberPanelEl.contains(e.relatedTarget)) highlightNumberPanel(false); });
+    numberPanelEl.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); if (isDraggingFromGrid && dragNum !== null) { returnNumberToInventory(dragNum); dropHandled = true; highlightNumberPanel(false); } removeGhost(); clearHighlight(); dragNum = null; isDraggingFromGrid = false; dragSourceCell = null; dropHandled = false; });
+
+    // ===== 触摸支持 =====
+    let touchDragNum = null, touchSourceCell = null, touchFromPanel = false;
+
+    function bindTouchPanel() {
+      document.querySelectorAll('.number-block:not(.hidden-num)').forEach(block => {
+        block.addEventListener('touchstart', (e) => {
+          const num = parseInt(block.dataset.num);
+          if ((numInventory[num] || 0) <= 0) { e.preventDefault(); return; }
+          e.preventDefault(); touchDragNum = num; touchFromPanel = true; touchSourceCell = null;
+          createGhost(touchDragNum, e.touches[0].clientX, e.touches[0].clientY);
+          block.classList.add('dragging');
+        }, { passive: false });
+      });
+    }
+
+    gridEl.addEventListener('touchstart', (e) => {
+      const cell = e.target.closest('.grid-cell');
+      if (!cell || !cell.classList.contains('filled')) return;
+      e.preventDefault(); touchDragNum = getCellNum(cell); touchFromPanel = false; touchSourceCell = cell;
+      createGhost(touchDragNum, e.touches[0].clientX, e.touches[0].clientY);
+      clearCellColor(cell);
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+      if (touchDragNum === null) return; e.preventDefault();
+      const touch = e.touches[0]; moveGhost(touch.clientX, touch.clientY); highlightTarget(touch.clientX, touch.clientY);
+      if (!touchFromPanel && touchSourceCell) highlightNumberPanel(isOverNumberPanel(touch.clientX, touch.clientY));
+    }, { passive: false });
+
+    document.addEventListener('touchend', (e) => {
+      if (touchDragNum === null) return;
+      const touch = e.changedTouches[0];
+      // 临时隐藏ghost以便elementFromPoint能正确找到目标
+      if (ghostEl) ghostEl.style.display = 'none';
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (ghostEl) ghostEl.style.display = '';
+      const cell = el ? el.closest('.grid-cell') : null; const overPanel = isOverNumberPanel(touch.clientX, touch.clientY);
+      if (cell && touchFromPanel) { if ((numInventory[touchDragNum] || 0) > 0) { if (cell.classList.contains('filled')) returnToInventory(getCellNum(cell)); placeNumber(cell, touchDragNum, true); } }
+      else if (cell && !touchFromPanel) { if (cell.classList.contains('filled')) returnToInventory(getCellNum(cell)); placeNumber(cell, touchDragNum, false); }
+      else if (overPanel && !touchFromPanel && touchSourceCell) { returnNumberToInventory(touchDragNum); }
+      else if (touchSourceCell) { applyCellColor(touchSourceCell, touchDragNum); }
+      removeGhost(); clearHighlight(); highlightNumberPanel(false);
+      document.querySelectorAll('.number-block').forEach(b => b.classList.remove('dragging'));
+      touchDragNum = null; touchSourceCell = null; touchFromPanel = false;
+    });
+
+    gridEl.addEventListener('dblclick', (e) => {
+      if (mouseFollowActive) return; // 拾取模式下不触发双击归还
+      const cell = e.target.closest('.grid-cell');
+      if (cell && cell.classList.contains('filled')) {
+        const num = getCellNum(cell); clearCellColor(cell); returnNumberToInventory(num);
+        cell.classList.add('snap-anim'); setTimeout(() => cell.classList.remove('snap-anim'), 300);
+      }
+    });
+
+    // ===== 键盘输入 & 鼠标悬停追踪 =====
+    let hoveredCell = null; // 当前鼠标悬停的网格格子
+
+    gridEl.addEventListener('mouseover', (e) => {
+      const cell = e.target.closest('.grid-cell');
+      hoveredCell = cell;
+    });
+    gridEl.addEventListener('mouseout', (e) => {
+      if (!gridEl.contains(e.relatedTarget)) hoveredCell = null;
+    });
+
+    document.addEventListener('keydown', (e) => {
+      // 只在游戏页面激活时响应
+      if (!document.getElementById('pageGame').classList.contains('active')) return;
+      if (gameWon) return;
+
+      const key = e.key;
+
+      // 键盘数字输入：1-9和0
+      if (/^[0-9]$/.test(key) && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        const num = parseInt(key); // 0→MAGIC_NUM, 1-9→数字
+        if (num !== MAGIC_NUM && !numColors[num]) return; // 无效数字忽略
+        // 检查是否有初始分配
+        if ((initialInventory[num] || 0) <= 0) {
+          showToast(`${num === MAGIC_NUM ? '魔石' : num} 不可用`);
+          return;
+        }
+        // 检查库存
+        if ((numInventory[num] || 0) <= 0) {
+          showToast(`${num === MAGIC_NUM ? '魔石' : num} 已耗尽`);
+          return;
+        }
+        if (!hoveredCell) {
+          showToast('请将鼠标悬停在网格格子上');
+          return;
+        }
+        // 如果格子已有数字，先归还
+        if (hoveredCell.classList.contains('filled')) {
+          returnToInventory(getCellNum(hoveredCell));
+        }
+        placeNumber(hoveredCell, num, true);
+        return;
+      }
+
+      // Delete/Backspace 清除当前悬停格子
+      if ((key === 'Delete' || key === 'Backspace') && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        if (hoveredCell && hoveredCell.classList.contains('filled')) {
+          e.preventDefault();
+          const num = getCellNum(hoveredCell);
+          clearCellColor(hoveredCell);
+          returnNumberToInventory(num);
+          hoveredCell.classList.add('snap-anim');
+          setTimeout(() => hoveredCell.classList.remove('snap-anim'), 300);
+        }
+        return;
+      }
+
+      // WASD / 方向键整体移动
+      let dir = null;
+      if (key === 'w' || key === 'W' || key === 'ArrowUp') dir = 'up';
+      else if (key === 's' || key === 'S' || key === 'ArrowDown') dir = 'down';
+      else if (key === 'a' || key === 'A' || key === 'ArrowLeft') dir = 'left';
+      else if (key === 'd' || key === 'D' || key === 'ArrowRight') dir = 'right';
+
+      if (dir) {
+        e.preventDefault();
+        shiftGrid(dir);
+        return;
+      }
+    });
+
+    // ===== 整体移动 =====
+    function shiftGrid(dir) {
+      // 收集所有已填充格子的信息 {row, col, num}
+      const filled = [];
+      for (let r = 0; r < gridRows; r++) {
+        for (let c = 0; c < gridCols; c++) {
+          const cell = cells[r * gridCols + c];
+          if (cell.classList.contains('filled')) {
+            filled.push({ row: r, col: c, num: getCellNum(cell) });
+          }
+        }
+      }
+      if (filled.length === 0) { showToast('网格中没有数字'); return; }
+
+      // 计算偏移
+      let dr = 0, dc = 0;
+      if (dir === 'up') dr = -1;
+      else if (dir === 'down') dr = 1;
+      else if (dir === 'left') dc = -1;
+      else if (dir === 'right') dc = 1;
+
+      // 边界检测：任一数字移动后是否超出网格
+      for (const f of filled) {
+        const nr = f.row + dr, nc = f.col + dc;
+        if (nr < 0 || nr >= gridRows || nc < 0 || nc >= gridCols) {
+          showToast('已到边界，无法移动');
+          return;
+        }
+      }
+
+      // 碰撞检测：目标位置是否与现有数字冲突（排除自身移动）
+      const currentSet = new Set(filled.map(f => f.row * gridCols + f.col));
+      const newPositions = filled.map(f => (f.row + dr) * gridCols + (f.col + dc));
+      for (const pos of newPositions) {
+        if (!currentSet.has(pos)) {
+          // 目标位置原本没有数字，检查是否为空
+          const targetCell = cells[pos];
+          if (targetCell.classList.contains('filled')) {
+            showToast('目标位置有数字，无法移动');
+            return;
+          }
+        }
+      }
+
+      // 执行移动：先清空所有旧位置，再填入新位置
+      for (const f of filled) {
+        clearCellColor(cells[f.row * gridCols + f.col]);
+      }
+      for (const f of filled) {
+        const nr = f.row + dr, nc = f.col + dc;
+        applyCellColor(cells[nr * gridCols + nc], f.num);
+        cells[nr * gridCols + nc].classList.add('snap-anim');
+        setTimeout((c) => c.classList.remove('snap-anim'), 300, cells[nr * gridCols + nc]);
+      }
+
+      checkAllTasks();
+    }
+
+    document.querySelectorAll('.shift-btn[data-dir]').forEach(btn => {
+      btn.addEventListener('click', () => shiftGrid(btn.dataset.dir));
+      // 触控长按连续移动
+      let shiftInterval = null;
+      btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        shiftInterval = setInterval(() => shiftGrid(btn.dataset.dir), 180);
+      });
+      const stopShift = () => { if (shiftInterval) { clearInterval(shiftInterval); shiftInterval = null; } };
+      btn.addEventListener('pointerup', stopShift);
+      btn.addEventListener('pointerleave', stopShift);
+      btn.addEventListener('pointercancel', stopShift);
+    });
+
+    // ===== 提示消息 =====
+    const toastEl = document.getElementById('toast');
+    let toastTimer = null;
+    function showToast(msg) { toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1500); }
+
+    // ============================================================
+    //  任务检测系统
+    // ============================================================
+
+    let currentLevel = 0, currentTasks = [], taskCompletedFlags = [], gameWon = false;
+
+    /**
+     * 检测任务是否完成
+     * task.grid 是二维数组，每个位置指定了目标数字
+     * - 正数(1-9): 该位置必须为该数字或魔石
+     * - 0: 该位置必须为魔石
+     * - null/undefined/负数: 忽略（不参与匹配）
+     */
+    function checkTask(task) {
+      const pat = task.grid;
+      const patRows = pat.length;
+      const patCols = Math.max(...pat.map(row => row.length));
+
+      for (let r = 0; r <= gridRows - patRows; r++) {
+        for (let c = 0; c <= gridCols - patCols; c++) {
+          let ok = true;
+          for (let pr = 0; pr < patRows && ok; pr++) {
+            for (let pc = 0; pc < pat[pr].length && ok; pc++) {
+              const target = pat[pr][pc];
+              if (target === null || target === undefined || target < 0) continue; // 忽略
+              const cellNum = getGridNum(r + pr, c + pc);
+              if (target === MAGIC_NUM) {
+                // 目标是魔石位：格子必须是魔石
+                if (cellNum !== MAGIC_NUM) ok = false;
+              } else {
+                // 目标是具体数字：格子是该数字或魔石
+                if (cellNum !== MAGIC_NUM && cellNum !== target) ok = false;
+              }
+            }
+          }
+          if (ok) return true;
+        }
+      }
+      return false;
+    }
+
+    // ===== 预览渲染 =====
+    function renderPreview(grid) {
+      const rows = grid.length;
+      const cols = Math.max(...grid.map(row => row.length));
+      let html = `<div class="task-preview" style="grid-template-columns: repeat(${cols}, 18px); grid-template-rows: repeat(${rows}, 18px);">`;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const val = (grid[r] && grid[r][c] !== undefined && grid[r][c] !== null) ? grid[r][c] : -1;
+          if (val < 0) {
+            html += `<div class="task-preview-cell"></div>`;
+          } else if (val === MAGIC_NUM) {
+            html += `<div class="task-preview-cell active" style="background:linear-gradient(135deg,#f9d423,#ff4e50,#a55eea);color:#fff;">★</div>`;
+          } else {
+            const nc = numColors[val];
+            html += `<div class="task-preview-cell active" style="background:${nc.solid};color:${nc.text};">${val}</div>`;
+          }
+        }
+      }
+      html += '</div>';
+      return html;
+    }
+
+    // ===== 渲染任务面板 =====
+    function renderTaskPanel() {
+      const listEl = document.getElementById('taskList');
+      listEl.innerHTML = '';
+      const completed = taskCompletedFlags.filter(Boolean).length;
+      const total = currentTasks.length;
+      document.getElementById('taskProgress').textContent = `${completed} / ${total} 已完成`;
+      document.getElementById('taskProgressFill').style.width = (total > 0 ? completed / total * 100 : 0) + '%';
+
+      currentTasks.forEach((task, i) => {
+        const done = taskCompletedFlags[i];
+        const item = document.createElement('div');
+        item.className = 'task-item' + (done ? ' completed' : '');
+        item.id = 'task-' + i;
+        let previewHTML = renderPreview(task.grid);
+
+        item.innerHTML = `
+          <div class="task-header">
+            <div class="task-name">目标${i + 1}</div>
+            <div class="task-status-badge ${done ? 'done' : 'progress'}">${done ? '完成' : '进行中'}</div>
+          </div>
+          ${previewHTML}
+          <div class="task-anywhere">✦ 可在网格任意位置完成</div>
+          <div class="task-magic-hint">★ 魔石可充当任意数字</div>
+        `;
+        listEl.appendChild(item);
+      });
+    }
+
+    // ===== 检查所有任务 =====
+    function checkAllTasks() {
+      if (gameWon) return;
+      let newlyCompleted = [];
+      currentTasks.forEach((task, i) => {
+        const wasDone = taskCompletedFlags[i];
+        const nowDone = checkTask(task);
+        taskCompletedFlags[i] = nowDone;
+        if (!wasDone && nowDone) newlyCompleted.push(i);
+      });
+      renderTaskPanel();
+      newlyCompleted.forEach(i => {
+        const item = document.getElementById('task-' + i);
+        if (item) { item.style.transform = 'scale(1.03)'; setTimeout(() => { item.style.transform = ''; }, 300); }
+      });
+      if (newlyCompleted.length > 0) showToast('目标达成！');
+      if (taskCompletedFlags.every(Boolean) && currentTasks.length > 0) {
+        gameWon = true;
+        levelCompleted[currentLevel] = true;
+        if (currentLevel + 1 < LEVELS.length) levelUnlocked[currentLevel + 1] = true;
+        saveProgress();
+        setTimeout(showVictory, 600);
+      } else if (!gameWon && hintUsedCount >= 1) {
+        // 已使用过提示时检查是否满足一键通关条件
+        checkSolveButton();
+      }
+    }
+
+    // ===== 胜利 =====
+    function showVictory() {
+      document.getElementById('victoryLevelName').textContent = LEVELS[currentLevel].name;
+      document.getElementById('victoryOverlay').classList.add('show');
+      document.querySelector('.grid-wrapper').classList.add('victory-pulse');
+      const nextBtn = document.getElementById('victoryBtnNext');
+      if (currentLevel >= LEVELS.length - 1) { nextBtn.textContent = '全部通关！'; nextBtn.style.opacity = '0.5'; nextBtn.style.pointerEvents = 'none'; }
+      else { nextBtn.textContent = '进入下一关'; nextBtn.style.opacity = '1'; nextBtn.style.pointerEvents = 'auto'; }
+    }
+
+    function hideVictory() {
+      document.getElementById('victoryOverlay').classList.remove('show');
+      const gw = document.querySelector('.grid-wrapper'); if (gw) gw.classList.remove('victory-pulse');
+    }
+
+    // ===== 加载关卡 =====
+    function loadLevel(idx, keepHintState = false) {
+      if (idx >= LEVELS.length) idx = LEVELS.length - 1;
+      if (idx < 0) idx = 0;
+      currentLevel = idx;
+      const level = LEVELS[idx];
+      currentTasks = level.tasks;
+      taskCompletedFlags = currentTasks.map(() => false);
+      gameWon = false;
+
+      // 重建网格
+      rebuildGrid(level.rows, level.cols);
+
+      // 初始化库存
+      numInventory = {}; initialInventory = {};
+      for (let n = 0; n <= 9; n++) {
+        numInventory[n] = level.inventory[n] || 0;
+        initialInventory[n] = level.inventory[n] || 0;
+      }
+      updateNumberPanel();
+      bindDragEvents();
+      bindTouchPanel();
+
+      document.getElementById('gameLevelTitle').textContent = `✦ ${level.name} ✦`;
+      document.getElementById('gameSubtitle').textContent = `${level.cols}×${level.rows} 网格 — 拖拽数字完成挑战`;
+      renderTaskPanel();
+      hideVictory();
+      if (keepHintState) {
+        // 重置关卡时保留提示/一键通关状态，清理失效的提示高亮，重新检查通关按钮
+        clearHintHighlight();
+        checkSolveButton();
+      } else {
+        initHintSystem();
+      }
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', () => { loadLevel(currentLevel, true); showToast('关卡已重置，数字已归还'); });
+
+    // ===== 提示系统 =====
+    let hintTimer = null;        // 提示冷却倒计时定时器
+    let hintCooldown = 0;        // 当前冷却剩余秒数
+    let hintUsedCount = 0;       // 本关已使用提示次数
+    let solveCountdown = 0;      // 一键通关倒计时剩余秒数
+    let solveTimerId = null;     // 一键通关倒计时定时器
+    let levelEnterTime = 0;      // 进入关卡时间戳
+    let hintRevealedCells = [];  // 提示显示的魔石格子（用于高亮）
+    let solveBtnEverShown = false; // 一键通关按钮是否曾经显示过
+    let cachedSolution = null;   // 缓存的求解结果（同一关内复用）
+
+    function initHintSystem() {
+      // 清理旧定时器
+      if (hintTimer) { clearInterval(hintTimer); hintTimer = null; }
+      if (solveTimerId) { clearInterval(solveTimerId); solveTimerId = null; }
+      // 重置状态
+      hintUsedCount = 0;
+      solveBtnEverShown = false;
+      cachedSolution = null;
+      hintCooldown = 10; // 进关后10秒才可用
+      solveCountdown = 0;
+      levelEnterTime = Date.now();
+      clearHintHighlight();
+      // UI 更新
+      const hintBtn = document.getElementById('hintBtn');
+      const hintTimerEl = document.getElementById('hintTimer');
+      const level = LEVELS[currentLevel];
+      const totalMagic = level.inventory[MAGIC_NUM] || 0;
+      hintBtn.style.display = totalMagic > 0 ? '' : 'none';
+      hintBtn.disabled = true;
+      hintTimerEl.textContent = totalMagic > 0 ? '10:00' : '';
+      document.getElementById('solveBtn').style.display = 'none';
+      // 启动初始倒计时（有魔石时才需要）
+      if (totalMagic > 0) startHintCooldown(600);
+    }
+
+    function formatCountdown(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return m + ':' + String(s).padStart(2, '0');
+    }
+
+    function startHintCooldown(seconds) {
+      hintCooldown = seconds;
+      const hintBtn = document.getElementById('hintBtn');
+      const hintTimerEl = document.getElementById('hintTimer');
+      hintBtn.disabled = true;
+      hintTimerEl.textContent = formatCountdown(seconds);
+      if (hintTimer) clearInterval(hintTimer);
+      hintTimer = setInterval(() => {
+        hintCooldown--;
+        if (hintCooldown <= 0) {
+          hintCooldown = 0;
+          clearInterval(hintTimer);
+          hintTimer = null;
+          hintBtn.disabled = false;
+          hintTimerEl.textContent = '';
+        } else {
+          hintTimerEl.textContent = formatCountdown(hintCooldown);
+        }
+      }, 1000);
+    }
+
+    function clearHintHighlight() {
+      hintRevealedCells.forEach(cell => cell.classList.remove('hint-glow'));
+      hintRevealedCells = [];
+    }
+
+    // 求解器获取魔石位置（复用已有solver，但只返回魔石位置）
+    function solveForMagicPositions() {
+      const level = LEVELS[currentLevel];
+      const rows = level.rows, cols = level.cols;
+      const lim = {};
+      for (let n = 0; n <= 9; n++) lim[n] = level.inventory[n] || 0;
+
+      const blocks = level.tasks.map(task => {
+        return { grid: task.grid, rows: task.grid.length, cols: Math.max(...task.grid.map(r => r.length)), ord: 0 };
+      });
+
+      if (blocks.length === 0) return null;
+
+      const grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+      function check(b, y, x) {
+        const use = {};
+        for (let n = 0; n <= 9; n++) use[n] = 0;
+        use[CONFLICT] = 0;
+        for (let i = 0; i < b.rows; i++) {
+          for (let j = 0; j < b.cols; j++) {
+            if (j >= b.grid[i].length) continue;
+            const curt = b.grid[i][j];
+            if (curt === null || curt === undefined || curt < 0) continue;
+            const cur = grid[y + i][x + j];
+            if (cur === CONFLICT) continue;
+            if (curt === MAGIC_NUM) {
+              if (cur === 0) use[CONFLICT]++;
+              else { use[cur]--; use[CONFLICT]++; }
+            } else if (cur === curt) continue;
+            else if (cur === 0) use[curt]++;
+            else { use[cur]--; use[CONFLICT]++; }
+          }
+        }
+        for (let v = 1; v <= 9; v++) {
+          if (use[v] > lim[v] + lim[MAGIC_NUM] - use[CONFLICT]) return false;
+        }
+        if (use[CONFLICT] > lim[MAGIC_NUM]) return false;
+        return true;
+      }
+
+      let found = false;
+      const result = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+      function dfs(dep) {
+        if (found) return;
+        if (dep === blocks.length) {
+          let needMagic = 0;
+          for (let v = 1; v <= 9; v++) if (lim[v] < 0) needMagic += -lim[v];
+          if (needMagic > lim[MAGIC_NUM]) return;
+          found = true;
+          for (let r = 0; r < rows; r++)
+            for (let c = 0; c < cols; c++)
+              result[r][c] = grid[r][c];
+          return;
+        }
+
+        for (let i = dep; i < blocks.length; i++) {
+          blocks[i].ord = 0;
+          for (let y = 0; y + blocks[i].rows <= rows; y++) {
+            for (let x = 0; x + blocks[i].cols <= cols; x++) {
+              if (check(blocks[i], y, x)) blocks[i].ord++;
+            }
+          }
+          if (blocks[i].ord === 0) return;
+        }
+        const saved = blocks.slice(dep);
+        saved.sort((a, b) => a.ord - b.ord);
+        for (let i = 0; i < saved.length; i++) blocks[dep + i] = saved[i];
+
+        const b = blocks[dep];
+        for (let y = 0; y + b.rows <= rows && !found; y++) {
+          for (let x = 0; x + b.cols <= cols && !found; x++) {
+            if (check(b, y, x)) {
+              const at = [];
+              for (let i = 0; i < b.rows; i++) {
+                at[i] = [];
+                for (let j = 0; j < b.cols; j++) {
+                  if (j >= b.grid[i].length) continue;
+                  const curt = b.grid[i][j];
+                  if (curt === null || curt === undefined || curt < 0) continue;
+                  const oy = y + i, ox = x + j;
+                  const oldVal = grid[oy][ox];
+                  at[i][j] = { oy, ox, oldVal };
+                  if (oldVal === CONFLICT) lim[MAGIC_NUM]++;
+                  else if (oldVal !== 0) lim[oldVal]++;
+                  if (oldVal !== CONFLICT) {
+                    if (curt === MAGIC_NUM) grid[oy][ox] = CONFLICT;
+                    else if (oldVal !== curt) grid[oy][ox] = oldVal ? CONFLICT : curt;
+                  }
+                  const newVal = grid[oy][ox];
+                  if (newVal === CONFLICT) lim[MAGIC_NUM]--;
+                  else if (newVal !== 0) lim[newVal]--;
+                }
+              }
+              dfs(dep + 1);
+              for (const row of at) {
+                for (const cell of row) {
+                  if (!cell) continue;
+                  const curVal = grid[cell.oy][cell.ox];
+                  if (curVal === CONFLICT) lim[MAGIC_NUM]++;
+                  else if (curVal !== 0) lim[curVal]++;
+                  grid[cell.oy][cell.ox] = cell.oldVal;
+                  if (cell.oldVal === CONFLICT) lim[MAGIC_NUM]--;
+                  else if (cell.oldVal !== 0) lim[cell.oldVal]--;
+                }
+              }
+            }
+          }
+        }
+        for (let i = 0; i < saved.length; i++) blocks[dep + i] = saved[i];
+      }
+
+      dfs(0);
+      if (!found) return null;
+
+      // 收集所有魔石位置（CONFLICT位 + 需要魔石补的数字位）
+      const magicPositions = [];
+      // 先计算每个数字的lim
+      const limCopy = {};
+      for (let n = 0; n <= 9; n++) limCopy[n] = level.inventory[n] || 0;
+
+      // CONFLICT位 → 魔石
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (result[r][c] === CONFLICT) {
+            magicPositions.push({ r, c, type: 'conflict' });
+            limCopy[MAGIC_NUM]--;
+          }
+        }
+      }
+      // 数字位中，lim[v]<0的需要魔石替代
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const v = result[r][c];
+          if (v >= 1 && v <= 9) limCopy[v]--;
+        }
+      }
+      for (let v = 1; v <= 9; v++) {
+        if (limCopy[v] < 0) {
+          // 有 -limCopy[v] 个数字v需要魔石替代，找出它们
+          let need = -limCopy[v];
+          for (let r = 0; r < rows && need > 0; r++) {
+            for (let c = 0; c < cols && need > 0; c++) {
+              if (result[r][c] === v && !magicPositions.some(p => p.r === r && p.c === c)) {
+                magicPositions.push({ r, c, type: 'substitute', originalNum: v });
+                need--;
+              }
+            }
+          }
+        }
+      }
+      return { result, magicPositions };
+    }
+
+    function useHint() {
+      if (hintCooldown > 0 || gameWon) return;
+
+      // 如果本关没有魔石库存，无需提示
+      const level = LEVELS[currentLevel];
+      const totalMagic = level.inventory[MAGIC_NUM] || 0;
+      if (totalMagic <= 0) {
+        showToast('本关无需魔石');
+        return;
+      }
+
+      // 求解获取魔石位置（缓存解以保持一致性）
+      if (!cachedSolution) {
+        cachedSolution = solveForMagicPositions();
+      }
+      const solution = cachedSolution;
+      if (!solution) {
+        showToast('未找到解');
+        return;
+      }
+
+      // 找出还没在网格上正确放置魔石的位置
+      const unrevealed = solution.magicPositions.filter(pos => {
+        const cellNum = getGridNum(pos.r, pos.c);
+        return cellNum !== MAGIC_NUM;
+      });
+
+      if (unrevealed.length === 0) {
+        showToast('所有魔石位置已正确！');
+        checkSolveButton();
+        return;
+      }
+
+      // 随机揭示一个未揭示的魔石位置
+      const pos = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+      const cell = cells[pos.r * level.cols + pos.c];
+
+      // 高亮提示
+      clearHintHighlight();
+      cell.classList.add('hint-glow');
+      hintRevealedCells.push(cell);
+
+      const prevNum = getCellNum(cell);
+      if (prevNum > 0 && prevNum <= 9) {
+        showToast(`提示：此处的 ${prevNum} 需要用魔石替代`);
+      } else {
+        showToast('提示：此处需要放置魔石 ★');
+      }
+
+      hintUsedCount++;
+      startHintCooldown(600);
+      checkSolveButton();
+    }
+
+    function checkSolveButton() {
+      const level = LEVELS[currentLevel];
+      const totalMagic = level.inventory[MAGIC_NUM] || 0;
+      const solveBtn = document.getElementById('solveBtn');
+
+      if (totalMagic <= 0) {
+        solveBtn.style.display = 'none';
+        return;
+      }
+
+      // 使用缓存的解
+      if (!cachedSolution) {
+        cachedSolution = solveForMagicPositions();
+      }
+      const solution = cachedSolution;
+      if (!solution) {
+        solveBtn.style.display = 'none';
+        if (solveTimerId) { clearInterval(solveTimerId); solveTimerId = null; }
+        return;
+      }
+
+      const allMagicPlaced = solution.magicPositions.every(pos => {
+        return getGridNum(pos.r, pos.c) === MAGIC_NUM;
+      });
+
+      const hintBtn = document.getElementById('hintBtn');
+      if (allMagicPlaced && hintUsedCount >= 1) {
+        // 隐藏提示按钮
+        hintBtn.style.display = 'none';
+        if (hintTimer) { clearInterval(hintTimer); hintTimer = null; }
+        // 显示一键通关按钮，开始倒计时（如果之前已在倒计时则继续剩余时间）
+        if (solveBtn.style.display === 'none' || !solveBtn.style.display) {
+          solveBtn.style.display = '';
+          solveBtnEverShown = true;
+          if (solveCountdown > 0) {
+            solveBtn.disabled = true;
+            solveBtn.textContent = `一键通关 (${formatCountdown(solveCountdown)})`;
+          } else {
+            // 倒计时已结束（之前已解锁），保持可用状态
+            solveBtn.disabled = false;
+            solveBtn.textContent = '一键通关';
+          }
+
+          if (solveCountdown > 0 && !solveTimerId) {
+            solveTimerId = setInterval(() => {
+              solveCountdown--;
+              if (solveCountdown <= 0) {
+                clearInterval(solveTimerId);
+                solveTimerId = null;
+                solveBtn.disabled = false;
+                solveBtn.textContent = '一键通关';
+              } else {
+                solveBtn.textContent = `一键通关 (${formatCountdown(solveCountdown)})`;
+              }
+            }, 1000);
+          }
+        }
+      } else {
+        // 魔石未全部就位，恢复提示按钮，隐藏一键通关按钮
+        if (totalMagic > 0) hintBtn.style.display = '';
+        solveBtn.style.display = 'none';
+        if (solveTimerId) { clearInterval(solveTimerId); solveTimerId = null; }
+      }
+    }
+
+    document.getElementById('hintBtn').addEventListener('click', useHint);
+
+    // ===== 一键通关求解器 =====
+    // C++原版: lim[1~8]=数字, lim[9]=魔石, 网格9=冲突, 任务块0=忽略
+    // JS游戏:  inventory[1~9]=数字, inventory[0]=魔石, 任务块-1=忽略, 0=魔石位
+    // 适配: lim[1~9]=数字, lim[0]=魔石(MAGIC_NUM), 网格用CONFLICT=99标记冲突
+    const CONFLICT = 99; // 冲突标记(需魔石)，不与0~9冲突
+
+    function solveLevel() {
+      const level = LEVELS[currentLevel];
+      const rows = level.rows, cols = level.cols;
+      const lim = {}; // lim[v] = 剩余可用数量, v: 1~9=数字, 0=魔石
+      for (let n = 0; n <= 9; n++) lim[n] = level.inventory[n] || 0;
+
+      // 构建任务块列表
+      const blocks = level.tasks.map(task => {
+        return { grid: task.grid, rows: task.grid.length, cols: Math.max(...task.grid.map(r => r.length)), ord: 0 };
+      });
+
+      if (blocks.length === 0) { showToast('无可解任务'); return; }
+
+      // 网格: 0=空, 1~9=数字, CONFLICT=冲突标记(需魔石)
+      const grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+      // 检查某个块能否放在(y,x)
+      function check(b, y, x) {
+        const use = {};
+        for (let n = 0; n <= 9; n++) use[n] = 0;
+        use[CONFLICT] = 0;
+        for (let i = 0; i < b.rows; i++) {
+          for (let j = 0; j < b.cols; j++) {
+            if (j >= b.grid[i].length) continue;
+            const curt = b.grid[i][j];
+            if (curt === null || curt === undefined || curt < 0) continue; // 忽略位(-1)
+            const cur = grid[y + i][x + j];
+            if (cur === CONFLICT) continue; // 已是冲突位(魔石)，跳过
+            if (curt === MAGIC_NUM) {
+              // 任务块要求魔石位：空位需魔石，有数字需魔石覆盖
+              if (cur === 0) use[CONFLICT]++; // 空位放魔石
+              else { use[cur]--; use[CONFLICT]++; } // 数字被魔石覆盖
+            } else if (cur === curt) continue; // 同数字，跳过
+            else if (cur === 0) use[curt]++; // 空位，需消耗curt
+            else { use[cur]--; use[CONFLICT]++; } // 不同数字冲突
+          }
+        }
+        for (let v = 1; v <= 9; v++) {
+          if (use[v] > lim[v] + lim[MAGIC_NUM] - use[CONFLICT]) return false;
+        }
+        if (use[CONFLICT] > lim[MAGIC_NUM]) return false;
+        return true;
+      }
+
+      // DFS
+      let found = false;
+      const result = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+      function dfs(dep) {
+        if (found) return;
+        if (dep === blocks.length) {
+          // 检查lim: 确保负数(需要魔石补的)不超过魔石剩余
+          let needMagic = 0;
+          for (let v = 1; v <= 9; v++) if (lim[v] < 0) needMagic += -lim[v];
+          if (needMagic > lim[MAGIC_NUM]) return;
+          // 找到解
+          found = true;
+          for (let r = 0; r < rows; r++)
+            for (let c = 0; c < cols; c++)
+              result[r][c] = grid[r][c];
+          return;
+        }
+
+        // 启发式排序：计算每个剩余块的可行位置数
+        for (let i = dep; i < blocks.length; i++) {
+          blocks[i].ord = 0;
+          for (let y = 0; y + blocks[i].rows <= rows; y++) {
+            for (let x = 0; x + blocks[i].cols <= cols; x++) {
+              if (check(blocks[i], y, x)) blocks[i].ord++;
+            }
+          }
+          if (blocks[i].ord === 0) return; // 剪枝
+        }
+        // 按可行位置数排序（最少的优先）
+        const saved = blocks.slice(dep);
+        saved.sort((a, b) => a.ord - b.ord);
+        for (let i = 0; i < saved.length; i++) blocks[dep + i] = saved[i];
+
+        const b = blocks[dep];
+        for (let y = 0; y + b.rows <= rows && !found; y++) {
+          for (let x = 0; x + b.cols <= cols && !found; x++) {
+            if (check(b, y, x)) {
+              // 放置
+              // C++中lim[0]是空位计数(不参与验证), JS中lim[0]是魔石库存
+              // 所以空位(oldVal=0)不能操作lim[0]
+              const at = [];
+              for (let i = 0; i < b.rows; i++) {
+                at[i] = [];
+                for (let j = 0; j < b.cols; j++) {
+                  if (j >= b.grid[i].length) continue;
+                  const curt = b.grid[i][j];
+                  if (curt === null || curt === undefined || curt < 0) continue;
+                  const oy = y + i, ox = x + j;
+                  const oldVal = grid[oy][ox];
+                  at[i][j] = { oy, ox, oldVal };
+                  // 归还旧值库存（空位不操作lim，CONFLICT归还到魔石，数字归还到对应lim）
+                  if (oldVal === CONFLICT) lim[MAGIC_NUM]++;
+                  else if (oldVal !== 0) lim[oldVal]++;
+                  // 更新网格
+                  if (oldVal !== CONFLICT) {
+                    if (curt === MAGIC_NUM) {
+                      // 任务块要求魔石位：空位或数字都变CONFLICT
+                      grid[oy][ox] = CONFLICT;
+                    } else if (oldVal !== curt) {
+                      // 不同值：空位放数字，数字冲突变CONFLICT
+                      grid[oy][ox] = oldVal ? CONFLICT : curt;
+                    }
+                    // oldVal === curt: 同数字，不变
+                  }
+                  // 消耗新值库存（空位不操作lim，CONFLICT消耗魔石，数字消耗对应lim）
+                  const newVal = grid[oy][ox];
+                  if (newVal === CONFLICT) lim[MAGIC_NUM]--;
+                  else if (newVal !== 0) lim[newVal]--;
+                }
+              }
+              dfs(dep + 1);
+              // 恢复
+              for (const row of at) {
+                for (const cell of row) {
+                  if (!cell) continue;
+                  // 归还当前值库存
+                  const curVal = grid[cell.oy][cell.ox];
+                  if (curVal === CONFLICT) lim[MAGIC_NUM]++;
+                  else if (curVal !== 0) lim[curVal]++;
+                  // 恢复旧值
+                  grid[cell.oy][cell.ox] = cell.oldVal;
+                  // 消耗旧值库存
+                  if (cell.oldVal === CONFLICT) lim[MAGIC_NUM]--;
+                  else if (cell.oldVal !== 0) lim[cell.oldVal]--;
+                }
+              }
+            }
+          }
+        }
+        // 恢复原始顺序
+        for (let i = 0; i < saved.length; i++) blocks[dep + i] = saved[i];
+      }
+
+      dfs(0);
+
+      if (!found) { showToast('未找到解，请检查关卡数据'); return; }
+
+      // 将解填入网格UI
+      // 先清空网格
+      cells.forEach(cell => { if (cell.classList.contains('filled')) { clearCellColor(cell); } });
+
+      // 重建库存（重置到初始）
+      numInventory = {};
+      for (let n = 0; n <= 9; n++) numInventory[n] = level.inventory[n] || 0;
+
+      // 填入数字
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const v = result[r][c];
+          if (v >= 1 && v <= 9) {
+            placeNumber(cells[r * cols + c], v, true);
+          } else if (v === CONFLICT) {
+            // 冲突位需要用魔石
+            placeNumber(cells[r * cols + c], MAGIC_NUM, true);
+          }
+        }
+      }
+
+      checkAllTasks();
+      showToast('一键通关完成！');
+    }
+
+    document.getElementById('solveBtn').addEventListener('click', () => { solveLevel(); });
+    document.getElementById('victoryBtnNext').addEventListener('click', () => { if (currentLevel < LEVELS.length - 1) loadLevel(currentLevel + 1); });
+    document.getElementById('victoryBtnStay').addEventListener('click', () => { hideVictory(); showToast('继续欣赏你的成果吧'); });
+    document.getElementById('victoryBtnLevels').addEventListener('click', () => { hideVictory(); renderLevelGrid(); showPage('pageLevels'); });
+
+    // ===== 星空背景 =====
+    (function initStarfield() {
+      const canvas = document.getElementById('bgCanvas');
+      const ctx = canvas.getContext('2d');
+      let w, h, stars = [], shootingStars = [];
+
+      function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      // 生成静态星星
+      for (let i = 0; i < 220; i++) {
+        stars.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * 1.4 + 0.2,
+          alpha: Math.random() * 0.6 + 0.2,
+          twinkleSpeed: 0.003 + Math.random() * 0.008,
+          twinklePhase: Math.random() * Math.PI * 2,
+        });
+      }
+
+      // 流星
+      function spawnShootingStar() {
+        shootingStars.push({
+          x: Math.random() * w * 0.8,
+          y: Math.random() * h * 0.4,
+          len: 60 + Math.random() * 80,
+          speed: 4 + Math.random() * 4,
+          angle: Math.PI / 4 + (Math.random() - 0.5) * 0.3,
+          alpha: 1,
+          life: 0,
+          maxLife: 40 + Math.random() * 30,
+        });
+      }
+
+      let tick = 0;
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+
+        // 深空渐变
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#06050f');
+        grad.addColorStop(0.35, '#0a0820');
+        grad.addColorStop(0.7, '#120e30');
+        grad.addColorStop(1, '#080618');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        // 星云光晕
+        const drawNebula = (cx, cy, rx, ry, color) => {
+          ctx.save();
+          ctx.globalAlpha = 1;
+          const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(rx, ry));
+          g.addColorStop(0, color);
+          g.addColorStop(1, 'transparent');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        };
+        drawNebula(w * 0.18, h * 0.8, w * 0.3, h * 0.25, 'rgba(90,25,150,0.07)');
+        drawNebula(w * 0.82, h * 0.15, w * 0.25, h * 0.2, 'rgba(20,55,160,0.06)');
+        drawNebula(w * 0.5, h * 0.45, w * 0.2, h * 0.15, 'rgba(160,80,30,0.035)');
+
+        // 绘制星星
+        tick++;
+        for (const s of stars) {
+          const flicker = Math.sin(tick * s.twinkleSpeed + s.twinklePhase) * 0.3 + 0.7;
+          const a = s.alpha * flicker;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(220,225,255,${a})`;
+          ctx.fill();
+          // 亮星加光晕
+          if (s.r > 1.0) {
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.r * 3, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(200,210,255,${a * 0.08})`;
+            ctx.fill();
+          }
+        }
+
+        // 流星
+        for (let i = shootingStars.length - 1; i >= 0; i--) {
+          const ss = shootingStars[i];
+          ss.life++;
+          const progress = ss.life / ss.maxLife;
+          ss.x += Math.cos(ss.angle) * ss.speed;
+          ss.y += Math.sin(ss.angle) * ss.speed;
+          ss.alpha = 1 - progress;
+
+          ctx.save();
+          ctx.globalAlpha = ss.alpha;
+          const tailX = ss.x - Math.cos(ss.angle) * ss.len;
+          const tailY = ss.y - Math.sin(ss.angle) * ss.len;
+          const g = ctx.createLinearGradient(tailX, tailY, ss.x, ss.y);
+          g.addColorStop(0, 'transparent');
+          g.addColorStop(0.6, 'rgba(200,210,255,0.3)');
+          g.addColorStop(1, 'rgba(255,255,255,0.9)');
+          ctx.strokeStyle = g;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(tailX, tailY);
+          ctx.lineTo(ss.x, ss.y);
+          ctx.stroke();
+          // 头部光点
+          ctx.beginPath();
+          ctx.arc(ss.x, ss.y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255,255,255,0.8)';
+          ctx.fill();
+          ctx.restore();
+
+          if (ss.life >= ss.maxLife) shootingStars.splice(i, 1);
+        }
+
+        // 随机生成流星
+        if (Math.random() < 0.008) spawnShootingStar();
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    // ===== 粒子 =====
+    function createParticles() {
+      const container = document.getElementById('particleContainer');
+      const colors = [
+        { bg: 'linear-gradient(135deg, #f9d423, #ff4e50)', type: 'gem' },
+        { bg: 'linear-gradient(135deg, #a55eea, #6c5ce7)', type: 'gem' },
+        { bg: 'linear-gradient(135deg, #45aaf2, #2d98da)', type: 'gem' },
+        { bg: '#f9d423', type: 'orb' },
+        { bg: '#ff4e50', type: 'orb' },
+        { bg: '#a55eea', type: 'orb' },
+        { bg: '#45aaf2', type: 'orb' },
+        { bg: '#2ed573', type: 'orb' },
+      ];
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        const c = colors[Math.floor(Math.random() * colors.length)];
+        p.className = 'home-decor ' + c.type;
+        p.style.left = Math.random() * 100 + '%';
+        p.style.bottom = '-10px';
+        const size = 3 + Math.random() * 6;
+        p.style.width = size + 'px';
+        p.style.height = size + 'px';
+        if (c.type === 'gem') {
+          p.style.background = c.bg;
+          p.style.boxShadow = `0 0 ${size * 2}px rgba(249,212,35,0.4)`;
+        } else {
+          p.style.background = c.bg;
+          p.style.boxShadow = `0 0 ${size}px ${c.bg}`;
+        }
+        p.style.animationDuration = (8 + Math.random() * 12) + 's';
+        p.style.animationDelay = (Math.random() * 15) + 's';
+        container.appendChild(p);
+      }
+    }
+    createParticles();
+
+    showPage('pageHome');
+  </script>
+</body>
+</html>
