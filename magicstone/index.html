@@ -189,8 +189,8 @@
     @keyframes magicShimmer { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
     /* ===== 网格 ===== */
-    .grid-wrapper { position: relative; }
-    .grid-container { display: grid; gap: 4px; padding: 16px; background: rgba(255, 255, 255, 0.04); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); }
+    .grid-wrapper { position: relative; display: flex; justify-content: center; }
+    .grid-container { display: grid; gap: 4px; padding: 16px; background: rgba(255, 255, 255, 0.04); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); width: fit-content; }
 
     .grid-cell {
       border-radius: 10px; background: rgba(255, 255, 255, 0.04);
@@ -305,6 +305,136 @@
     /* ===== 页面切换 ===== */
     @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .page.active { animation: fadeIn 0.4s ease; }
+
+    /* ===== 移动端适配 ===== */
+    @media screen and (max-width: 768px) {
+      .home-title {
+        font-size: 38px;
+        letter-spacing: 4px;
+      }
+      .home-subtitle {
+        font-size: 12px;
+        margin-bottom: 32px;
+      }
+      .home-btn {
+        width: 220px;
+        padding: 14px 0;
+        font-size: 15px;
+      }
+      .main-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        width: 100%;
+        padding: 0 8px;
+      }
+      .number-panel {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 12px 10px;
+        gap: 6px;
+      }
+      .number-block {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+        border-radius: 10px;
+      }
+      .panel-title, .panel-hint, .magic-label, .panel-divider {
+        display: none;
+      }
+      .grid-wrapper {
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+        justify-content: center;
+      }
+      .grid-container {
+        box-sizing: border-box;
+        max-width: 100%;
+        width: fit-content;
+      }
+      .task-panel {
+        width: 100%;
+        max-width: 360px;
+        max-height: 200px;
+        padding: 14px 12px;
+      }
+      .actions {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 0 8px;
+      }
+      .btn {
+        padding: 8px 18px;
+        font-size: 13px;
+      }
+      .shift-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+      }
+      .victory-title {
+        font-size: 28px;
+      }
+      .victory-btn {
+        padding: 10px 24px;
+        font-size: 13px;
+      }
+      .level-page-title {
+        font-size: 24px;
+        letter-spacing: 2px;
+        margin-bottom: 20px;
+      }
+      .level-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .level-card {
+        width: auto;
+        padding: 12px 8px;
+        border-radius: 12px;
+      }
+      .level-num { font-size: 20px; }
+      .level-label { font-size: 11px; }
+      .level-size { font-size: 10px; }
+      .level-difficulty { font-size: 9px; }
+      .level-status { font-size: 10px; }
+      .nav-btn {
+        padding: 10px 28px;
+        font-size: 13px;
+      }
+      .rules-container {
+        max-width: 100%;
+        padding: 20px 16px;
+        max-height: 65vh;
+      }
+    }
+    @media screen and (max-width: 375px) {
+      .level-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      .level-card {
+        padding: 10px 6px;
+      }
+      .level-num { font-size: 18px; }
+      .number-block {
+        width: 38px;
+        height: 38px;
+        font-size: 16px;
+      }
+      .grid-wrapper {
+        max-width: 100%;
+        overflow: hidden;
+        justify-content: center;
+      }
+      .task-panel {
+        max-width: 320px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -758,7 +888,7 @@
           ${statusHTML}
         `;
         if (unlocked) {
-          card.addEventListener('click', () => { loadLevel(i); showPage('pageGame'); });
+          card.addEventListener('click', () => { showPage('pageGame'); loadLevel(i); });
         }
         grid.appendChild(card);
       });
@@ -788,14 +918,34 @@
       gridCols = cols;
 
       // 根据网格大小自适应格子尺寸
-      const maxGridPx = 520;
-      cellSize = Math.min(52, Math.floor((maxGridPx - 32 - (cols - 1) * 4) / cols));
-      cellSize = Math.max(32, cellSize);
+      const isMobile = window.innerWidth <= 768;
+      const borderPx = 2; // grid-container 左右border各1px
+      // 用 grid-wrapper 的实际可用宽度计算，而非猜测窗口宽度
+      const wrapperEl = document.querySelector('.grid-wrapper');
+      let wrapperWidth = wrapperEl ? wrapperEl.clientWidth : 0;
+      // 如果页面未显示（clientWidth=0），用屏幕宽度减去 main-container 的 padding 估算
+      if (!wrapperWidth || wrapperWidth < 100) {
+        // main-container padding: 0 8px (16px total), page可能有额外边距
+        wrapperWidth = isMobile ? window.innerWidth - 20 : 520;
+      }
+      const maxGridPx = isMobile ? Math.min(wrapperWidth, window.innerWidth - 20) - borderPx : 520;
+      const maxCellSize = isMobile ? 40 : 52;
+      const gapSize = isMobile ? 3 : 4;
+      const paddingSize = isMobile ? 10 : 16;
+      cellSize = Math.min(maxCellSize, Math.floor((maxGridPx - paddingSize * 2 - (cols - 1) * gapSize) / cols));
+      cellSize = Math.max(24, cellSize);
+      // 安全检查：确保网格总宽度不超过容器
+      const totalWidth = cellSize * cols + gapSize * (cols - 1) + paddingSize * 2 + borderPx;
+      if (isMobile && totalWidth > wrapperWidth) {
+        cellSize = Math.max(24, Math.floor((wrapperWidth - paddingSize * 2 - (cols - 1) * gapSize - borderPx) / cols));
+      }
 
       gridEl.style.gridTemplateColumns = `repeat(${cols}, ${cellSize}px)`;
       gridEl.style.gridTemplateRows = `repeat(${rows}, ${cellSize}px)`;
+      gridEl.style.gap = gapSize + 'px';
+      gridEl.style.padding = paddingSize + 'px';
 
-      const fontSize = Math.max(14, cellSize * 0.42);
+      const fontSize = Math.max(12, cellSize * 0.42);
 
       for (let i = 0; i < rows * cols; i++) {
         const cell = document.createElement('div');
@@ -1130,37 +1280,51 @@
     numberPanelEl.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); if (isDraggingFromGrid && dragNum !== null) { returnNumberToInventory(dragNum); dropHandled = true; highlightNumberPanel(false); } removeGhost(); clearHighlight(); dragNum = null; isDraggingFromGrid = false; dragSourceCell = null; dropHandled = false; });
 
     // ===== 触摸支持 =====
-    let touchDragNum = null, touchSourceCell = null, touchFromPanel = false;
+    let touchDragNum = null, touchSourceCell = null, touchFromPanel = false, touchDragId = null;
 
     function bindTouchPanel() {
       document.querySelectorAll('.number-block:not(.hidden-num)').forEach(block => {
         block.addEventListener('touchstart', (e) => {
+          if (touchDragNum !== null) return; // 已有拖拽进行中，忽略新触摸
           const num = parseInt(block.dataset.num);
           if ((numInventory[num] || 0) <= 0) { e.preventDefault(); return; }
-          e.preventDefault(); touchDragNum = num; touchFromPanel = true; touchSourceCell = null;
-          createGhost(touchDragNum, e.touches[0].clientX, e.touches[0].clientY);
+          e.preventDefault(); touchDragNum = num; touchFromPanel = true; touchSourceCell = null; touchDragId = e.changedTouches[0].identifier;
+          createGhost(touchDragNum, e.changedTouches[0].clientX, e.changedTouches[0].clientY);
           block.classList.add('dragging');
         }, { passive: false });
       });
     }
 
     gridEl.addEventListener('touchstart', (e) => {
+      if (touchDragNum !== null) return; // 已有拖拽进行中，忽略新触摸
       const cell = e.target.closest('.grid-cell');
       if (!cell || !cell.classList.contains('filled')) return;
-      e.preventDefault(); touchDragNum = getCellNum(cell); touchFromPanel = false; touchSourceCell = cell;
-      createGhost(touchDragNum, e.touches[0].clientX, e.touches[0].clientY);
+      e.preventDefault(); touchDragNum = getCellNum(cell); touchFromPanel = false; touchSourceCell = cell; touchDragId = e.changedTouches[0].identifier;
+      createGhost(touchDragNum, e.changedTouches[0].clientX, e.changedTouches[0].clientY);
       clearCellColor(cell);
     }, { passive: false });
 
     document.addEventListener('touchmove', (e) => {
       if (touchDragNum === null) return; e.preventDefault();
-      const touch = e.touches[0]; moveGhost(touch.clientX, touch.clientY); highlightTarget(touch.clientX, touch.clientY);
+      // 只跟踪发起拖拽的那个触摸点
+      let touch = null;
+      for (let i = 0; i < e.touches.length; i++) {
+        if (e.touches[i].identifier === touchDragId) { touch = e.touches[i]; break; }
+      }
+      if (!touch) return;
+      moveGhost(touch.clientX, touch.clientY); highlightTarget(touch.clientX, touch.clientY);
       if (!touchFromPanel && touchSourceCell) highlightNumberPanel(isOverNumberPanel(touch.clientX, touch.clientY));
     }, { passive: false });
 
     document.addEventListener('touchend', (e) => {
       if (touchDragNum === null) return;
-      const touch = e.changedTouches[0];
+      // 只处理发起拖拽的触摸点抬起
+      let endedTouch = null;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === touchDragId) { endedTouch = e.changedTouches[i]; break; }
+      }
+      if (!endedTouch) return; // 其他手指抬起，忽略
+      const touch = endedTouch;
       // 临时隐藏ghost以便elementFromPoint能正确找到目标
       if (ghostEl) ghostEl.style.display = 'none';
       const el = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -1172,7 +1336,7 @@
       else if (touchSourceCell) { applyCellColor(touchSourceCell, touchDragNum); }
       removeGhost(); clearHighlight(); highlightNumberPanel(false);
       document.querySelectorAll('.number-block').forEach(b => b.classList.remove('dragging'));
-      touchDragNum = null; touchSourceCell = null; touchFromPanel = false;
+      touchDragNum = null; touchSourceCell = null; touchFromPanel = false; touchDragId = null;
     });
 
     gridEl.addEventListener('dblclick', (e) => {
@@ -1503,6 +1667,39 @@
         initHintSystem();
       }
     }
+
+    // 移动端屏幕旋转/窗口大小变化时重新计算网格尺寸
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (document.getElementById('pageGame').classList.contains('active') && gridRows > 0 && gridCols > 0) {
+          // 保存当前网格数据
+          const savedData = [];
+          cells.forEach(cell => {
+            savedData.push(cell.textContent.replace(/[^\d★]/g, '') || '');
+          });
+          const savedMagic = [];
+          cells.forEach(cell => savedMagic.push(cell.classList.contains('magic-cell')));
+          // 重新构建网格
+          rebuildGrid(gridRows, gridCols);
+          // 恢复网格数据
+          cells.forEach((cell, i) => {
+            if (savedData[i]) {
+              const val = savedData[i];
+              if (val === '★') {
+                cell.textContent = '★';
+                cell.classList.add('filled', 'magic-cell');
+              } else {
+                cell.textContent = val;
+                cell.classList.add('filled');
+              }
+              if (savedMagic[i]) cell.classList.add('magic-cell');
+            }
+          });
+        }
+      }, 250);
+    });
 
     document.getElementById('resetBtn').addEventListener('click', () => { loadLevel(currentLevel, true); showToast('关卡已重置，数字已归还'); });
 
