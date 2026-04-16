@@ -90,6 +90,13 @@
     }
     .home-btn-rules:hover { background: rgba(255, 255, 255, 0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); }
 
+    .home-btn-creator {
+      background: linear-gradient(135deg, #a55eea, #6c5ce7);
+      color: #fff; box-shadow: 0 6px 28px rgba(108, 92, 231, 0.35), 0 0 0 1px rgba(165,94,234,0.2);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    .home-btn-creator:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 8px 36px rgba(108, 92, 231, 0.5), 0 0 0 1px rgba(165,94,234,0.3); }
+
     .home-decor { position: fixed; pointer-events: none; animation: floatUp linear infinite; opacity: 0; }
     .home-decor.gem { border-radius: 2px; transform: rotate(45deg); }
     .home-decor.orb { border-radius: 50%; }
@@ -233,6 +240,9 @@
     .task-anywhere { font-size: 9px; color: #666; margin-top: 4px; letter-spacing: 0.5px; }
     .task-item.completed .task-anywhere { color: #5a9a6a; }
     .task-magic-hint { font-size: 9px; color: #b8a030; margin-top: 2px; letter-spacing: 0.5px; }
+
+    .task-delete-btn { font-size: 11px; color: #666; cursor: pointer; padding: 1px 5px; border-radius: 4px; transition: background 0.2s, color 0.2s; line-height: 1; user-select: none; flex-shrink: 0; }
+    .task-delete-btn:hover { background: rgba(255,78,80,0.2); color: #ff4e50; }
 
     .task-preview { display: inline-grid; gap: 2px; margin-top: 6px; margin-left: 2px; }
     .task-preview-cell { width: 18px; height: 18px; border-radius: 3px; background: rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; }
@@ -446,6 +456,7 @@
     <div class="home-buttons">
       <button class="home-btn home-btn-start" id="btnStart">开始游戏</button>
       <button class="home-btn home-btn-rules" id="btnRules">规则说明</button>
+      <button class="home-btn home-btn-creator" id="btnCreator">关卡制作</button>
     </div>
   </div>
 
@@ -455,6 +466,70 @@
     <div class="level-hint" style="max-width:620px;text-align:center;font-size:13px;color:#999;line-height:1.8;margin-bottom:24px;letter-spacing:0.5px;">难度星级仅代表大致难度，因人而异</div>
     <div class="level-grid" id="levelGrid"></div>
     <button class="nav-btn" id="btnLevelsBack">返回主界面</button>
+  </div>
+
+  <!-- ==================== 关卡制作 ==================== -->
+  <div class="page" id="pageCreator">
+    <div class="game-header">
+      <div class="game-title">✦ 关卡制作 ✦</div>
+      <button class="game-back-btn" id="btnCreatorBack">← 返回</button>
+    </div>
+    <p class="subtitle">自由摆放数字，设计你的关卡</p>
+
+    <div class="main-container creator-layout">
+      <div class="number-panel" id="creatorNumberPanel">
+        <div class="panel-title">数 字 库</div>
+        <div class="number-block" data-num="1" draggable="true"><span class="num-badge" id="cbadge-1">∞</span>1</div>
+        <div class="number-block" data-num="2" draggable="true"><span class="num-badge" id="cbadge-2">∞</span>2</div>
+        <div class="number-block" data-num="3" draggable="true"><span class="num-badge" id="cbadge-3">∞</span>3</div>
+        <div class="number-block" data-num="4" draggable="true"><span class="num-badge" id="cbadge-4">∞</span>4</div>
+        <div class="number-block" data-num="5" draggable="true"><span class="num-badge" id="cbadge-5">∞</span>5</div>
+        <div class="number-block" data-num="6" draggable="true"><span class="num-badge" id="cbadge-6">∞</span>6</div>
+        <div class="number-block" data-num="7" draggable="true"><span class="num-badge" id="cbadge-7">∞</span>7</div>
+        <div class="number-block" data-num="8" draggable="true"><span class="num-badge" id="cbadge-8">∞</span>8</div>
+        <div class="number-block" data-num="9" draggable="true"><span class="num-badge" id="cbadge-9">∞</span>9</div>
+        <div class="panel-divider"></div>
+        <div class="number-block magic-block" data-num="0" draggable="true"><span class="num-badge" id="cbadge-0">9</span>★</div>
+        <div class="magic-label" id="magicLabel">魔石 (限9个)</div>
+        <button class="btn btn-hint" id="btnAdjustInventory" style="width: 100%; margin-top: 12px; font-size: 12px; padding: 7px 0;">调整数字数量</button>
+      </div>
+
+      <div class="grid-wrapper creator-grid-wrapper" style="position: relative; padding-bottom: 40px; padding-right: 40px;">
+        <div class="grid-container" id="creatorGrid"></div>
+        
+        <input type="range" id="rowRange" min="3" max="9" value="9" 
+               style="position: absolute; right: 0; top: 16px; height: calc(100% - 56px); writing-mode: bt-lr; -webkit-appearance: slider-vertical; width: 20px;">
+        <div style="position: absolute; right: -5px; top: -5px; font-size: 10px; color: #888;">行: <span id="rowVal">9</span></div>
+
+        <input type="range" id="colRange" min="3" max="9" value="9" 
+               style="position: absolute; bottom: 0; left: 16px; width: calc(100% - 56px); height: 20px;">
+        <div style="position: absolute; left: -5px; bottom: -5px; font-size: 10px; color: #888;">列: <span id="colVal">9</span></div>
+      </div>
+
+      <div class="task-panel" id="creatorTaskPanel">
+        <div class="task-panel-title">🎯 本关目标</div>
+        <div class="task-panel-progress" id="creatorTaskProgress">0 / 0 已完成</div>
+        <div class="task-progress-bar"><div class="task-progress-fill" id="creatorTaskProgressFill" style="width: 0%"></div></div>
+        <button class="btn btn-hint" id="btnAddCreatorTask" style="width: 100%; margin-bottom: 12px;">+ 增加目标</button>
+        <div id="creatorTaskList"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="shift-group">
+        <div class="shift-pad">
+          <button class="shift-btn shift-up" data-cdir="up">↑</button>
+          <button class="shift-btn shift-left" data-cdir="left">←</button>
+          <div class="shift-btn shift-center">⊕</div>
+          <button class="shift-btn shift-right" data-cdir="right">→</button>
+          <button class="shift-btn shift-down" data-cdir="down">↓</button>
+        </div>
+        <div class="shift-label">整体移动</div>
+      </div>
+      <button class="btn btn-reset" id="creatorResetBtn">清空网格</button>
+      <button class="btn btn-solve" id="creatorAutoSolveBtn">自动求解</button>
+      <button class="btn btn-hint" id="creatorFinishBtn" style="background: linear-gradient(135deg, #ff9f43, #ff6b6b);">完成制作</button>
+    </div>
   </div>
 
   <!-- ==================== 规则说明 ==================== -->
@@ -546,7 +621,49 @@
     </div>
   </div>
 
+  <div class="victory-overlay" id="taskModal" style="z-index: 4000;">
+    <div class="task-panel" id="taskModalPanel" style="width: auto; max-width: 95vw; max-height: 95vh; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; align-items: center; position: relative;">
+      <div class="rules-title" style="margin-bottom: 12px;">设计目标形状</div>
+      <div class="panel-hint" style="margin-bottom: 14px;">点击/拖拽/键盘(1-9)填入数字，Delete清除，不可用魔石</div>
+      
+      <div class="grid-container" id="modalGrid" style="margin-bottom: 16px;"></div>
+      
+      <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;" id="modalPalette"></div>
+      
+      <div style="display: flex; gap: 16px;">
+        <button class="btn btn-reset" id="modalCancelBtn">取消</button>
+        <button class="btn btn-solve" id="modalConfirmBtn">确认添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 调整数字库存弹窗 -->
+  <div class="victory-overlay" id="inventoryModal" style="z-index: 4000;">
+    <div class="task-panel" id="inventoryModalPanel" style="width: auto; max-width: 95vw; max-height: 95vh; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; align-items: center;">
+      <div class="rules-title" style="margin-bottom: 14px;">调整数字库存</div>
+      <div class="panel-hint" style="margin-bottom: 16px;">设置各数字块的可用数量（-1表示无限）</div>
+      <div id="inventoryInputs" style="display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 320px;"></div>
+      <div style="display: flex; gap: 16px; margin-top: 20px;">
+        <button class="btn btn-reset" id="invCancelBtn">取消</button>
+        <button class="btn btn-solve" id="invConfirmBtn">确认</button>
+      </div>
+    </div>
+  </div>
+
   <canvas id="bgCanvas"></canvas>
+
+  <div class="victory-overlay" id="exportModal" style="z-index: 5000;">
+    <div class="task-panel" style="width: auto; max-width: 90vw; padding: 28px 32px; display: flex; flex-direction: column; align-items: center;">
+      <div class="rules-title" style="margin-bottom: 16px;">保存关卡</div>
+      <div class="panel-hint" style="margin-bottom: 20px;">关卡校验通过！请为你的关卡命名：</div>
+      <input type="text" id="exportLevelName" placeholder="输入关卡名称" style="width: 200px; padding: 10px; margin-bottom: 24px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff; text-align: center; font-size: 16px; outline: none;">
+      <div style="display: flex; gap: 16px;">
+        <button class="btn btn-reset" id="exportCancelBtn">取消</button>
+        <button class="btn btn-solve" id="exportConfirmBtn">生成并下载</button>
+      </div>
+    </div>
+  </div>
+
   <div id="particleContainer" style="position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0;"></div>
 
   <script>
@@ -741,7 +858,7 @@
       {
         name: '太极',
         rows: 7, cols: 7,
-        inventory: { 1:4, 2:4, 3:4, 4:2, 5:4, 6:4, 7:2, 8:0, 9:0, 0:1 },
+        inventory: { 1:5, 2:4, 3:4, 4:2, 5:4, 6:4, 7:2, 8:0, 9:0, 0:1 },
         tasks: [
           { grid: [[7,-1,-1,7,-1,-1,7]] },
           { grid: [[4],[-1],[-1],[4],[-1],[-1],[4]] },
@@ -900,6 +1017,8 @@
     document.getElementById('btnLevelsBack').addEventListener('click', () => showPage('pageHome'));
     document.getElementById('btnRulesBack').addEventListener('click', () => showPage('pageHome'));
     document.getElementById('btnGameBack').addEventListener('click', () => { renderLevelGrid(); showPage('pageLevels'); });
+    document.getElementById('btnCreator').addEventListener('click', () => { initCreator(); showPage('pageCreator'); });
+    document.getElementById('btnCreatorBack').addEventListener('click', () => showPage('pageHome'));
 
     // ===== 网格系统 =====
     const gridEl = document.getElementById('grid');
@@ -1260,6 +1379,13 @@
     });
     gridEl.addEventListener('dragleave', (e) => { if (!gridEl.contains(e.relatedTarget)) clearHighlight(); });
 
+    // document 级别 dragover：确保拖到空白区域时 ghost 仍然跟随鼠标
+    document.addEventListener('dragover', (e) => {
+      if (dragNum === null || !ghostEl) return;
+      e.preventDefault();
+      moveGhost(e.clientX, e.clientY);
+    });
+
     gridEl.addEventListener('drop', (e) => {
       e.preventDefault(); e.stopPropagation(); if (dragNum === null) return;
       // 临时隐藏ghost以便elementFromPoint能正确找到目标
@@ -1510,24 +1636,34 @@
      * - 0: 该位置必须为魔石
      * - null/undefined/负数: 忽略（不参与匹配）
      */
-    function checkTask(task) {
-      const pat = task.grid;
-      const patRows = pat.length;
-      const patCols = Math.max(...pat.map(row => row.length));
+    /**
+     * 通用判题函数：检查 pattern 是否能在 cellsArray 的 rows×cols 网格中匹配
+     * @param {Array} pattern - 二维数组目标 (0=魔石位, 1-9=数字, -1/null=忽略)
+     * @param {Array} cellsArray - DOM格子数组
+     * @param {number} rows - 网格行数
+     * @param {number} cols - 网格列数
+     */
+    function checkTaskGrid(pattern, cellsArray, rows, cols) {
+      const patRows = pattern.length;
+      const patCols = Math.max(...pattern.map(row => row.length));
+      const getNum = (r, c) => {
+        if (r < 0 || r >= rows || c < 0 || c >= cols) return -1;
+        const cell = cellsArray[r * cols + c];
+        if (!cell || !cell.classList.contains('filled')) return -1;
+        return parseInt(cell.dataset.num);
+      };
 
-      for (let r = 0; r <= gridRows - patRows; r++) {
-        for (let c = 0; c <= gridCols - patCols; c++) {
+      for (let r = 0; r <= rows - patRows; r++) {
+        for (let c = 0; c <= cols - patCols; c++) {
           let ok = true;
           for (let pr = 0; pr < patRows && ok; pr++) {
-            for (let pc = 0; pc < pat[pr].length && ok; pc++) {
-              const target = pat[pr][pc];
-              if (target === null || target === undefined || target < 0) continue; // 忽略
-              const cellNum = getGridNum(r + pr, c + pc);
+            for (let pc = 0; pc < pattern[pr].length && ok; pc++) {
+              const target = pattern[pr][pc];
+              if (target === null || target === undefined || target < 0) continue;
+              const cellNum = getNum(r + pr, c + pc);
               if (target === MAGIC_NUM) {
-                // 目标是魔石位：格子必须是魔石
                 if (cellNum !== MAGIC_NUM) ok = false;
               } else {
-                // 目标是具体数字：格子是该数字或魔石
                 if (cellNum !== MAGIC_NUM && cellNum !== target) ok = false;
               }
             }
@@ -1536,6 +1672,10 @@
         }
       }
       return false;
+    }
+
+    function checkTask(task) {
+      return checkTaskGrid(task.grid, cells, gridRows, gridCols);
     }
 
     // ===== 预览渲染 =====
@@ -2224,6 +2364,1788 @@
     document.getElementById('victoryBtnNext').addEventListener('click', () => { if (currentLevel < LEVELS.length - 1) loadLevel(currentLevel + 1); });
     document.getElementById('victoryBtnStay').addEventListener('click', () => { hideVictory(); showToast('继续欣赏你的成果吧'); });
     document.getElementById('victoryBtnLevels').addEventListener('click', () => { hideVictory(); renderLevelGrid(); showPage('pageLevels'); });
+
+    // ===== 关卡制作模式 =====
+    const creatorGridEl = document.getElementById('creatorGrid');
+    const creatorPanelEl = document.getElementById('creatorNumberPanel');
+    let creatorCells = [];
+    let creatorRows = 9, creatorCols = 9, creatorCellSize = 52;
+    let creatorInventory = { 0: 9, 1: -1, 2: -1, 3: -1, 4: -1, 5: -1, 6: -1, 7: -1, 8: -1, 9: -1 }; // -1=无限
+
+    function updateCreatorBadges() {
+      for (let n = 0; n <= 9; n++) {
+        const badge = document.getElementById('cbadge-' + n);
+        if (!badge) continue;
+        const val = creatorInventory[n];
+        if (val === -1) {
+          badge.textContent = '∞';
+          badge.classList.remove('zero');
+        } else {
+          badge.textContent = val;
+          badge.classList.toggle('zero', val <= 0);
+        }
+        // 魔石 depleted 样式
+        if (n === 0) {
+          const block = document.querySelector('#creatorNumberPanel .magic-block');
+          if (block) block.classList.toggle('depleted', val <= 0);
+          const mlabel = document.getElementById('magicLabel');
+          if (mlabel) mlabel.textContent = val === -1 ? '魔石 (无限)' : `魔石 (限${val}个)`;
+        }
+        // 普通数字 depleted 样式
+        if (n >= 1 && n <= 9) {
+          const block = document.querySelector(`#creatorNumberPanel .number-block[data-num="${n}"]`);
+          if (block) block.classList.toggle('depleted', val === 0);
+        }
+      }
+    }
+
+    function initCreator() {
+      creatorInventory = { 0: 9, 1: -1, 2: -1, 3: -1, 4: -1, 5: -1, 6: -1, 7: -1, 8: -1, 9: -1 };
+      creatorRows = 9;
+      creatorCols = 9;
+      creatorTasks = [];
+      creatorTaskCompleted = [];
+
+      // 重置滑块UI
+      const rowRange = document.getElementById('rowRange');
+      const colRange = document.getElementById('colRange');
+      if (rowRange) {
+        rowRange.value = 9;
+        colRange.value = 9;
+        document.getElementById('rowVal').textContent = 9;
+        document.getElementById('colVal').textContent = 9;
+      }
+
+      updateCreatorBadges();
+      buildCreatorGrid();
+      bindCreatorDrag();
+      bindCreatorTouch();
+      bindCreatorShift();
+      bindCreatorSizeControls();
+      renderCreatorTasks();
+    }
+
+    function buildCreatorGrid() {
+      creatorGridEl.innerHTML = '';
+      creatorCells = [];
+
+      const isMobile = window.innerWidth <= 768;
+      const borderPx = 2;
+      const wrapperEl = document.querySelector('.creator-grid-wrapper');
+      let wrapperWidth = wrapperEl ? wrapperEl.clientWidth : 0;
+      if (!wrapperWidth || wrapperWidth < 100) {
+        wrapperWidth = isMobile ? window.innerWidth - 20 : 520;
+      }
+      const maxGridPx = isMobile ? Math.min(wrapperWidth, window.innerWidth - 20) - borderPx : 520;
+      const maxCellSize = isMobile ? 40 : 52;
+      const gapSize = isMobile ? 3 : 4;
+      const paddingSize = isMobile ? 10 : 16;
+      creatorCellSize = Math.min(maxCellSize, Math.floor((maxGridPx - paddingSize * 2 - (creatorCols - 1) * gapSize) / creatorCols));
+      creatorCellSize = Math.max(24, creatorCellSize);
+      const totalWidth = creatorCellSize * creatorCols + gapSize * (creatorCols - 1) + paddingSize * 2 + borderPx;
+      if (isMobile && totalWidth > wrapperWidth) {
+        creatorCellSize = Math.max(24, Math.floor((wrapperWidth - paddingSize * 2 - (creatorCols - 1) * gapSize - borderPx) / creatorCols));
+      }
+
+      creatorGridEl.style.gridTemplateColumns = `repeat(${creatorCols}, ${creatorCellSize}px)`;
+      creatorGridEl.style.gridTemplateRows = `repeat(${creatorRows}, ${creatorCellSize}px)`;
+      creatorGridEl.style.gap = gapSize + 'px';
+      creatorGridEl.style.padding = paddingSize + 'px';
+
+      const fontSize = Math.max(12, creatorCellSize * 0.42);
+
+      for (let i = 0; i < creatorRows * creatorCols; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.style.width = creatorCellSize + 'px';
+        cell.style.height = creatorCellSize + 'px';
+        cell.style.fontSize = fontSize + 'px';
+        cell.dataset.index = i;
+        cell.dataset.num = '';
+        creatorGridEl.appendChild(cell);
+        creatorCells.push(cell);
+      }
+    }
+
+    function bindCreatorSizeControls() {
+      const rowRange = document.getElementById('rowRange');
+      const colRange = document.getElementById('colRange');
+      const rowVal = document.getElementById('rowVal');
+      const colVal = document.getElementById('colVal');
+
+      // 防止重复绑定
+      if (rowRange._bound) return;
+      rowRange._bound = true;
+
+      const updateSize = () => {
+        const newRows = parseInt(rowRange.value);
+        const newCols = parseInt(colRange.value);
+
+        // 更新 UI 显示
+        rowVal.textContent = newRows;
+        colVal.textContent = newCols;
+
+        // 暂存当前网格数据，并暂时回收所有库存
+        const savedData = [];
+        creatorCells.forEach(cell => {
+          if (cell.classList.contains('filled')) {
+            const idx = parseInt(cell.dataset.index);
+            const r = Math.floor(idx / creatorCols);
+            const c = idx % creatorCols;
+            const val = parseInt(cell.dataset.num);
+
+            savedData.push({ r, c, val });
+
+            // 归还库存
+            if (val === MAGIC_NUM) {
+              creatorInventory[0]++;
+            } else if (val > 0 && creatorInventory[val] !== -1) {
+              creatorInventory[val]++;
+            }
+          }
+        });
+        updateCreatorBadges();
+
+        // 更新全局行列变量，重建空白网格
+        creatorRows = newRows;
+        creatorCols = newCols;
+        buildCreatorGrid();
+
+        // 把未越界的数据重新放上去
+        savedData.forEach(data => {
+          if (data.r < newRows && data.c < newCols) {
+            const newIdx = data.r * creatorCols + data.c;
+            creatorApplyColor(creatorCells[newIdx], data.val, true);
+          }
+        });
+        checkCreatorTasks();
+      };
+
+      rowRange.addEventListener('input', updateSize);
+      colRange.addEventListener('input', updateSize);
+    }
+
+    // ===== 制作模式：任务目标系统 =====
+    let creatorTasks = [];
+    let creatorTaskCompleted = [];
+    let currentModalPaintNum = 1;
+    let modalCells = [];
+
+    // 渲染制作模式的任务列表
+    function renderCreatorTasks() {
+      const listEl = document.getElementById('creatorTaskList');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      const completed = creatorTaskCompleted.filter(Boolean).length;
+      const total = creatorTasks.length;
+      const progEl = document.getElementById('creatorTaskProgress');
+      const fillEl = document.getElementById('creatorTaskProgressFill');
+      if (progEl) progEl.textContent = `${completed} / ${total} 已完成`;
+      if (fillEl) fillEl.style.width = (total > 0 ? completed / total * 100 : 0) + '%';
+
+      creatorTasks.forEach((task, i) => {
+        const done = creatorTaskCompleted[i];
+        const item = document.createElement('div');
+        item.className = 'task-item' + (done ? ' completed' : '');
+        item.id = 'ctask-' + i;
+        let previewHTML = renderPreview(task.grid);
+        item.innerHTML = `
+          <div class="task-header">
+            <div class="task-name">目标${i + 1}</div>
+            <div class="task-status-badge ${done ? 'done' : 'progress'}">${done ? '完成' : '进行中'}</div>
+            <div class="task-delete-btn" data-task-idx="${i}" title="删除此目标">✕</div>
+          </div>
+          ${previewHTML}
+          <div class="task-anywhere">✦ 可在网格任意位置完成</div>
+          <div class="task-magic-hint">★ 魔石可充当任意数字</div>
+        `;
+        listEl.appendChild(item);
+      });
+
+      // 绑定删除按钮
+      listEl.querySelectorAll('.task-delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = parseInt(btn.dataset.taskIdx);
+          if (idx >= 0 && idx < creatorTasks.length) {
+            creatorTasks.splice(idx, 1);
+            creatorTaskCompleted.splice(idx, 1);
+            renderCreatorTasks();
+            checkCreatorTasks();
+          }
+        });
+      });
+    }
+
+    // 制作模式：实时判题
+    function checkCreatorTasks() {
+      if (creatorTasks.length === 0) return;
+      let anyNew = false;
+      creatorTasks.forEach((task, i) => {
+        const wasDone = creatorTaskCompleted[i];
+        const nowDone = checkTaskGrid(task.grid, creatorCells, creatorRows, creatorCols);
+        creatorTaskCompleted[i] = nowDone;
+        if (!wasDone && nowDone) anyNew = true;
+      });
+      renderCreatorTasks();
+      if (anyNew) showToast('目标达成！');
+    }
+
+    // ===== 弹窗交互状态 =====
+    let modalHoveredCell = null;      // 鼠标悬停的弹窗格子
+    let modalPickingNum = null;       // 点击拾取模式：当前选中的数字
+    let modalPickingFromGrid = false; // 是否从网格拾取
+    let modalPickingSourceCell = null;// 拾取来源格子
+    let modalMouseFollowActive = false;// 点击拾取-放置模式激活
+    let modalDragNum = null;          // 拖拽数字
+    let modalDragSourceCell = null;   // 拖拽来源格子
+    let modalDropHandled = false;     // 拖拽是否已处理
+
+    // 弹窗内：给格子填色
+    function modalApplyColor(cell, num) {
+      if (num === -1) {
+        // 擦除
+        cell.dataset.num = '-1';
+        cell.style.background = ''; cell.style.boxShadow = ''; cell.style.color = '';
+        cell.textContent = ''; cell.classList.remove('filled');
+      } else {
+        const c = numColors[num];
+        if (!c) return;
+        cell.dataset.num = num;
+        cell.style.background = c.bg;
+        cell.style.boxShadow = `0 2px 8px ${c.shadow}`;
+        cell.style.color = c.text;
+        cell.textContent = num;
+        cell.classList.add('filled');
+      }
+    }
+
+    // 弹窗内：清空格子
+    function modalClearCell(cell) {
+      cell.dataset.num = '-1';
+      cell.style.background = ''; cell.style.boxShadow = ''; cell.style.color = '';
+      cell.textContent = ''; cell.classList.remove('filled');
+    }
+
+    // 弹窗内：获取格子数字
+    function modalGetCellNum(cell) {
+      const n = parseInt(cell.dataset.num);
+      return isNaN(n) || n < 0 ? -1 : n;
+    }
+
+    // 弹窗内：取消拾取
+    function modalCancelPick() {
+      if (modalPickingFromGrid && modalPickingSourceCell && modalPickingNum !== null) {
+        modalApplyColor(modalPickingSourceCell, modalPickingNum);
+      }
+      modalPickingNum = null; modalPickingFromGrid = false; modalPickingSourceCell = null;
+      if (modalMouseFollowActive) {
+        removeGhost(); clearHighlight();
+        document.body.style.cursor = '';
+        modalMouseFollowActive = false;
+      }
+    }
+
+    // 弹窗内：放置到格子
+    function modalPlacePick(targetCell) {
+      if (modalPickingNum === null || !targetCell) return;
+      if (targetCell.classList.contains('filled')) {
+        modalClearCell(targetCell);
+      }
+      modalApplyColor(targetCell, modalPickingNum);
+      modalPickingNum = null; modalPickingFromGrid = false; modalPickingSourceCell = null;
+      removeGhost(); clearHighlight();
+      document.body.style.cursor = '';
+      modalMouseFollowActive = false;
+    }
+
+    // 弹窗：打开"增加目标"
+    document.getElementById('btnAddCreatorTask').addEventListener('click', () => {
+      const mGrid = document.getElementById('modalGrid');
+      mGrid.innerHTML = '';
+      modalCells = [];
+      currentModalPaintNum = 1;
+      modalHoveredCell = null;
+      modalCancelPick();
+
+      // 计算弹窗格子大小：基于视口，确保不溢出
+      const isMobile = window.innerWidth <= 768;
+      const maxAvail = Math.min(window.innerWidth * 0.88, window.innerHeight * 0.65);
+      const cellSize = Math.min(isMobile ? 36 : 44, Math.floor(maxAvail / Math.max(creatorRows, creatorCols)));
+      mGrid.style.gridTemplateColumns = `repeat(${creatorCols}, ${cellSize}px)`;
+      mGrid.style.gridTemplateRows = `repeat(${creatorRows}, ${cellSize}px)`;
+      mGrid.style.gap = isMobile ? '2px' : '3px';
+      mGrid.style.padding = '10px';
+
+      // 生成空网格
+      for (let i = 0; i < creatorRows * creatorCols; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.style.width = cellSize + 'px';
+        cell.style.height = cellSize + 'px';
+        cell.style.fontSize = Math.max(12, cellSize * 0.42) + 'px';
+        cell.dataset.num = '-1';
+        cell.setAttribute('draggable', 'false');
+
+        // 悬停追踪
+        cell.addEventListener('mouseenter', () => { modalHoveredCell = cell; });
+        cell.addEventListener('mouseleave', () => { if (modalHoveredCell === cell) modalHoveredCell = null; });
+
+        // 点击交互：支持画笔模式和拾取-放置模式
+        cell.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (modalMouseFollowActive) {
+            // 拾取-放置模式
+            modalPlacePick(cell);
+            return;
+          }
+          if (currentModalPaintNum === -1) {
+            modalClearCell(cell);
+          } else {
+            modalApplyColor(cell, currentModalPaintNum);
+          }
+        });
+
+        // 拖拽：从弹窗网格拖起
+        cell.addEventListener('dragstart', (e) => {
+          if (!cell.classList.contains('filled')) { e.preventDefault(); return; }
+          e.stopPropagation();
+          modalDragNum = modalGetCellNum(cell);
+          modalDragSourceCell = cell;
+          modalDropHandled = false;
+          const img = new Image(); img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+          e.dataTransfer.setDragImage(img, 0, 0); e.dataTransfer.effectAllowed = 'move';
+          createGhost(modalDragNum, e.clientX, e.clientY);
+          modalClearCell(cell);
+        });
+
+        cell.addEventListener('dragend', () => {
+          removeGhost(); clearHighlight();
+          if (!modalDropHandled && modalDragSourceCell && modalDragNum !== null) {
+            modalApplyColor(modalDragSourceCell, modalDragNum);
+          }
+          modalDragNum = null; modalDragSourceCell = null; modalDropHandled = false;
+        });
+
+        mGrid.appendChild(cell);
+        modalCells.push(cell);
+      }
+
+      // 弹窗网格：拖拽放入
+      mGrid.addEventListener('dragover', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        if (modalDragNum === null && cDragNum === null) return;
+        e.dataTransfer.dropEffect = modalDragNum !== null ? 'move' : 'copy';
+        moveGhost(e.clientX, e.clientY); highlightTarget(e.clientX, e.clientY);
+      });
+      mGrid.addEventListener('dragleave', (e) => { if (!mGrid.contains(e.relatedTarget)) clearHighlight(); });
+      mGrid.addEventListener('drop', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const dragN = modalDragNum !== null ? modalDragNum : cDragNum;
+        if (dragN === null) return;
+        if (dragN === MAGIC_NUM) { showToast('目标中不可使用魔石'); removeGhost(); clearHighlight(); modalDragNum = null; cDragNum = null; return; }
+        if (ghostEl) ghostEl.style.display = 'none';
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        if (ghostEl) ghostEl.style.display = '';
+        const cell = el ? el.closest('.grid-cell') : null;
+        if (cell && cell.closest('#modalGrid')) {
+          if (cell.classList.contains('filled')) modalClearCell(cell);
+          modalApplyColor(cell, dragN);
+          if (modalDragNum !== null) modalDropHandled = true;
+          else { cDropHandled = true; }
+        } else if (modalDragNum !== null && modalDragSourceCell) {
+          modalApplyColor(modalDragSourceCell, modalDragNum);
+          modalDropHandled = true;
+        }
+        removeGhost(); clearHighlight();
+        modalDragNum = null; modalDragSourceCell = null;
+        if (cDragNum !== null) { cDragNum = null; cDragFromGrid = false; cDragSourceCell = null; }
+      });
+
+      // 初始化调色板
+      const palette = document.getElementById('modalPalette');
+      palette.innerHTML = '';
+      for (let n = 1; n <= 9; n++) {
+        const btn = document.createElement('div');
+        const c = numColors[n];
+        btn.className = 'number-block';
+        btn.style.width = '38px'; btn.style.height = '38px'; btn.style.fontSize = '16px';
+        btn.style.background = c.bg; btn.style.color = c.text;
+        btn.style.cursor = 'pointer'; btn.style.borderRadius = '8px';
+        btn.style.display = 'flex'; btn.style.alignItems = 'center'; btn.style.justifyContent = 'center';
+        btn.style.fontWeight = '700';
+        btn.textContent = n;
+        btn.setAttribute('draggable', 'true');
+        btn.dataset.modalNum = n;
+        if (n === currentModalPaintNum) btn.style.outline = '2px solid #fff';
+
+        // 点击选择画笔 or 拾取-放置
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (modalMouseFollowActive && modalPickingNum === n && !modalPickingFromGrid) {
+            modalCancelPick();
+            palette.querySelectorAll('.number-block, .eraser-btn').forEach(b => b.style.outline = '');
+            btn.style.outline = '2px solid #fff';
+            currentModalPaintNum = n;
+            return;
+          }
+          // 切换到拾取-放置模式
+          modalCancelPick();
+          currentModalPaintNum = n;
+          palette.querySelectorAll('.number-block, .eraser-btn').forEach(b => b.style.outline = '');
+          btn.style.outline = '2px solid #fff';
+        });
+
+        // 双击启动拾取-放置模式
+        btn.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          modalCancelPick();
+          currentModalPaintNum = n;
+          palette.querySelectorAll('.number-block, .eraser-btn').forEach(b => b.style.outline = '');
+          btn.style.outline = '2px solid #fff';
+          modalPickingNum = n; modalPickingFromGrid = false; modalPickingSourceCell = null;
+          modalMouseFollowActive = true;
+          createGhost(n, lastMouseX, lastMouseY);
+          document.body.style.cursor = 'none';
+        });
+
+        // 拖拽：从调色板拖到弹窗网格
+        btn.addEventListener('dragstart', (e) => {
+          e.stopPropagation();
+          modalDragNum = n; modalDragSourceCell = null; modalDropHandled = false;
+          const img = new Image(); img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+          e.dataTransfer.setDragImage(img, 0, 0); e.dataTransfer.effectAllowed = 'copy';
+          createGhost(n, e.clientX, e.clientY);
+        });
+        btn.addEventListener('dragend', () => {
+          removeGhost(); clearHighlight();
+          if (!modalDropHandled && modalDragNum !== null) {
+            // 未成功放置，无需特殊处理（从面板拖出无需归还）
+          }
+          modalDragNum = null; modalDragSourceCell = null; modalDropHandled = false;
+        });
+
+        palette.appendChild(btn);
+      }
+
+      // 橡皮擦按钮
+      const eraser = document.createElement('div');
+      eraser.className = 'number-block eraser-btn';
+      eraser.style.width = '38px'; eraser.style.height = '38px'; eraser.style.fontSize = '14px';
+      eraser.style.background = 'rgba(255,255,255,0.1)'; eraser.style.color = '#888';
+      eraser.style.cursor = 'pointer'; eraser.style.borderRadius = '8px';
+      eraser.style.display = 'flex'; eraser.style.alignItems = 'center'; eraser.style.justifyContent = 'center';
+      eraser.style.fontWeight = '700';
+      eraser.textContent = '✕';
+
+      eraser.addEventListener('click', (e) => {
+        e.stopPropagation();
+        modalCancelPick();
+        currentModalPaintNum = -1;
+        palette.querySelectorAll('.number-block, .eraser-btn').forEach(b => b.style.outline = '');
+        eraser.style.outline = '2px solid #fff';
+      });
+
+      palette.appendChild(eraser);
+
+      document.getElementById('taskModal').classList.add('show');
+    });
+
+    // 弹窗：鼠标跟随（拾取-放置模式）
+    document.addEventListener('mousemove', (e) => {
+      if (!modalMouseFollowActive) return;
+      if (!document.getElementById('taskModal').classList.contains('show')) return;
+      moveGhost(e.clientX, e.clientY);
+      if (ghostEl) ghostEl.style.display = 'none';
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (ghostEl) ghostEl.style.display = '';
+      const cell = el ? el.closest('#modalGrid .grid-cell') : null;
+      clearHighlight();
+      if (cell) cell.classList.add('highlight'), highlightedCell = cell;
+    });
+
+    // 弹窗：点击空白取消拾取
+    document.addEventListener('click', (e) => {
+      if (!document.getElementById('taskModal').classList.contains('show')) return;
+      if (!modalMouseFollowActive) return;
+      const modalPanel = document.getElementById('taskModalPanel');
+      if (!modalPanel.contains(e.target)) {
+        modalCancelPick();
+      }
+    });
+
+    // 弹窗：右键/ESC取消拾取
+    document.addEventListener('contextmenu', (e) => {
+      if (modalMouseFollowActive && document.getElementById('taskModal').classList.contains('show')) {
+        e.preventDefault(); modalCancelPick();
+      }
+    });
+
+    // 弹窗：键盘输入
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('taskModal').classList.contains('show')) return;
+
+      const key = e.key;
+
+      // 数字键 1-9
+      if (/^[1-9]$/.test(key) && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        const num = parseInt(key);
+        if (modalMouseFollowActive) {
+          // 拾取-放置模式：切换选中数字
+          modalCancelPick();
+          const palette = document.getElementById('modalPalette');
+          currentModalPaintNum = num;
+          palette.querySelectorAll('.number-block, .eraser-btn').forEach(b => b.style.outline = '');
+          const btn = palette.querySelector(`[data-modal-num="${num}"]`);
+          if (btn) btn.style.outline = '2px solid #fff';
+          // 直接启动拾取-放置
+          modalPickingNum = num; modalPickingFromGrid = false; modalPickingSourceCell = null;
+          modalMouseFollowActive = true;
+          createGhost(num, lastMouseX, lastMouseY);
+          document.body.style.cursor = 'none';
+        } else if (modalHoveredCell) {
+          // 画笔模式：直接填入悬停格子
+          modalApplyColor(modalHoveredCell, num);
+          currentModalPaintNum = num;
+          const palette = document.getElementById('modalPalette');
+          palette.querySelectorAll('.number-block, .eraser-btn').forEach(b => b.style.outline = '');
+          const btn = palette.querySelector(`[data-modal-num="${num}"]`);
+          if (btn) btn.style.outline = '2px solid #fff';
+        } else {
+          // 无悬停格子：切换画笔数字
+          currentModalPaintNum = num;
+          const palette = document.getElementById('modalPalette');
+          palette.querySelectorAll('.number-block, .eraser-btn').forEach(b => b.style.outline = '');
+          const btn = palette.querySelector(`[data-modal-num="${num}"]`);
+          if (btn) btn.style.outline = '2px solid #fff';
+        }
+        return;
+      }
+
+      // Delete/Backspace 清除悬停格子
+      if ((key === 'Delete' || key === 'Backspace') && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        if (modalHoveredCell && modalHoveredCell.classList.contains('filled')) {
+          modalClearCell(modalHoveredCell);
+          modalHoveredCell.classList.add('snap-anim');
+          setTimeout(() => { if (modalHoveredCell) modalHoveredCell.classList.remove('snap-anim'); }, 300);
+        }
+        return;
+      }
+
+      // ESC 关闭弹窗或取消拾取
+      if (key === 'Escape') {
+        if (modalMouseFollowActive) { modalCancelPick(); return; }
+        document.getElementById('taskModal').classList.remove('show');
+        return;
+      }
+    });
+
+    // 弹窗：取消
+    document.getElementById('modalCancelBtn').addEventListener('click', () => {
+      modalCancelPick();
+      document.getElementById('taskModal').classList.remove('show');
+    });
+
+    // 弹窗：确认添加（提取最小包围盒）
+    document.getElementById('modalConfirmBtn').addEventListener('click', () => {
+      modalCancelPick();
+      let minR = creatorRows, maxR = -1;
+      let minC = creatorCols, maxC = -1;
+
+      modalCells.forEach((cell, i) => {
+        const num = parseInt(cell.dataset.num);
+        if (num > 0) {
+          const r = Math.floor(i / creatorCols);
+          const c = i % creatorCols;
+          if (r < minR) minR = r;
+          if (r > maxR) maxR = r;
+          if (c < minC) minC = c;
+          if (c > maxC) maxC = c;
+        }
+      });
+
+      if (maxR === -1) {
+        showToast('目标不能为空！');
+        return;
+      }
+
+      // 裁剪出最小二维数组
+      const newGrid = [];
+      for (let r = minR; r <= maxR; r++) {
+        const row = [];
+        for (let c = minC; c <= maxC; c++) {
+          const idx = r * creatorCols + c;
+          const num = parseInt(modalCells[idx].dataset.num);
+          row.push(num > 0 ? num : -1);
+        }
+        newGrid.push(row);
+      }
+
+      creatorTasks.push({ grid: newGrid });
+      creatorTaskCompleted.push(false);
+      document.getElementById('taskModal').classList.remove('show');
+      renderCreatorTasks();
+      checkCreatorTasks();
+    });
+
+    // ===== 调整数字库存弹窗 =====
+    document.getElementById('btnAdjustInventory').addEventListener('click', () => {
+      const container = document.getElementById('inventoryInputs');
+      container.innerHTML = '';
+
+      // 统计当前网格中已放置的各数字数量
+      const usedCount = {};
+      for (let n = 0; n <= 9; n++) usedCount[n] = 0;
+      creatorCells.forEach(cell => {
+        if (cell.classList.contains('filled')) {
+          const num = creatorGetCellNum(cell);
+          if (num >= 0 && num <= 9) usedCount[num]++;
+        }
+      });
+
+      // 1-9 + 魔石
+      const items = [];
+      for (let n = 1; n <= 9; n++) {
+        items.push({ num: n, label: String(n), color: numColors[n] });
+      }
+      items.push({ num: 0, label: '★ 魔石', color: { bg: 'linear-gradient(135deg, #f9d423, #ff4e50, #a55eea)', text: '#fff', solid: '#a55eea' } });
+
+      items.forEach(item => {
+        const n = item.num;
+        // 总上限 = 剩余可用 + 已放置数量
+        const remaining = creatorInventory[n];
+        const totalLimit = remaining === -1 ? -1 : remaining + usedCount[n];
+
+        const row = document.createElement('div');
+        row.style.cssText = 'display: flex; align-items: center; gap: 12px; padding: 6px 0;';
+
+        const label = document.createElement('div');
+        const labelWidth = n === 0 ? '62px' : '42px';
+        label.style.cssText = `width: ${labelWidth}; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; background: ${item.color.bg || item.color.solid}; color: ${item.color.text}; box-shadow: 0 2px 8px rgba(0,0,0,0.3);`;
+        label.textContent = item.label;
+
+        const hint = document.createElement('span');
+        hint.style.cssText = 'font-size: 11px; color: #888; flex-shrink: 0; width: 75px;';
+        hint.textContent = n === 0 ? '(上限0~9)' : '(-1=无限)';
+
+        const usedLabel = document.createElement('span');
+        usedLabel.style.cssText = 'font-size: 11px; color: #aaa; flex-shrink: 0; width: 50px; text-align: right;';
+        usedLabel.textContent = `已用${usedCount[n]}`;
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = n === 0 ? '0' : '-1';
+        input.max = n === 0 ? '9' : '99';
+        input.dataset.invNum = n;
+        input.value = totalLimit;
+        input.style.cssText = 'width: 70px; padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: #fff; font-size: 14px; font-weight: 600; text-align: center; outline: none; transition: border-color 0.2s;';
+        input.addEventListener('focus', () => { input.style.borderColor = 'rgba(249,212,35,0.5)'; });
+        input.addEventListener('blur', () => { input.style.borderColor = 'rgba(255,255,255,0.15)'; });
+
+        row.appendChild(label);
+        row.appendChild(hint);
+        row.appendChild(usedLabel);
+        row.appendChild(input);
+        container.appendChild(row);
+      });
+
+      document.getElementById('inventoryModal').classList.add('show');
+    });
+
+    document.getElementById('invCancelBtn').addEventListener('click', () => {
+      document.getElementById('inventoryModal').classList.remove('show');
+    });
+
+    document.getElementById('invConfirmBtn').addEventListener('click', () => {
+      const inputs = document.getElementById('inventoryInputs').querySelectorAll('input[data-inv-num]');
+
+      // 统计当前网格中已放置的各数字数量
+      const usedCount = {};
+      for (let n = 0; n <= 9; n++) usedCount[n] = 0;
+      creatorCells.forEach(cell => {
+        if (cell.classList.contains('filled')) {
+          const num = creatorGetCellNum(cell);
+          if (num >= 0 && num <= 9) usedCount[num]++;
+        }
+      });
+
+      const newInv = {};
+
+      inputs.forEach(input => {
+        const num = parseInt(input.dataset.invNum);
+        let totalLimit = parseInt(input.value);
+        if (num === 0) {
+          // 魔石：上限9，不能为无限
+          if (isNaN(totalLimit) || totalLimit < 0) totalLimit = 0;
+          if (totalLimit > 9) totalLimit = 9;
+        } else {
+          if (isNaN(totalLimit) || totalLimit < -1) totalLimit = -1;
+          if (totalLimit > 99) totalLimit = 99;
+        }
+
+        // 自动回收超出新上限的数字
+        if (totalLimit !== -1 && usedCount[num] > totalLimit) {
+          const excess = usedCount[num] - totalLimit;
+          let removed = 0;
+          for (let i = creatorCells.length - 1; i >= 0 && removed < excess; i--) {
+            const cell = creatorCells[i];
+            if (cell.classList.contains('filled') && creatorGetCellNum(cell) === num) {
+              cell.style.background = ''; cell.style.boxShadow = ''; cell.style.color = '';
+              cell.textContent = ''; cell.dataset.num = '';
+              cell.classList.remove('filled', 'return-hint', 'magic-cell', 'hint-glow');
+              cell.setAttribute('draggable', 'false');
+              removed++;
+            }
+          }
+          usedCount[num] = totalLimit; // 更新已用数量
+        }
+
+        // 剩余可用 = 总上限 - 已放置数量（无限则为-1）
+        if (totalLimit === -1) {
+          newInv[num] = -1;
+        } else {
+          newInv[num] = totalLimit - usedCount[num];
+        }
+      });
+
+      creatorInventory = newInv;
+      updateCreatorBadges();
+      checkCreatorTasks();
+      document.getElementById('inventoryModal').classList.remove('show');
+      showToast('库存已更新');
+    });
+
+    // 库存弹窗ESC关闭
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && document.getElementById('inventoryModal').classList.contains('show')) {
+        document.getElementById('inventoryModal').classList.remove('show');
+      }
+    });
+
+    function creatorApplyColor(cell, num, skipCheck) {
+      const fontSize = Math.max(12, creatorCellSize * 0.42);
+      const magicFontSize = Math.max(14, creatorCellSize * 0.48);
+
+      // 库存逻辑
+      const oldNum = creatorGetCellNum(cell);
+      if (num === MAGIC_NUM) {
+        // 放置魔石：如果不是替换已有魔石，需扣魔石库存
+        if (oldNum !== MAGIC_NUM) {
+          if ((creatorInventory[0] || 0) <= 0) {
+            showToast('魔石已达到上限');
+            return;
+          }
+          creatorInventory[0]--;
+          // 归还被覆盖的旧数字库存
+          if (oldNum > 0 && creatorInventory[oldNum] !== -1) {
+            creatorInventory[oldNum]++;
+          }
+        }
+      } else {
+        // 放置普通数字
+        // 如果不是替换相同数字，需检查新数字库存
+        if (oldNum !== num) {
+          const inv = creatorInventory[num];
+          if (inv !== -1 && inv <= 0) {
+            showToast(`数字 ${num} 已耗尽`);
+            return;
+          }
+        }
+        // 库存检查通过后，归还旧数字库存并扣新数字库存
+        if (oldNum === MAGIC_NUM) {
+          creatorInventory[0]++;
+        } else if (oldNum > 0 && oldNum !== num && creatorInventory[oldNum] !== -1) {
+          creatorInventory[oldNum]++;
+        }
+        if (oldNum !== num && creatorInventory[num] !== -1) {
+          creatorInventory[num]--;
+        }
+      }
+      updateCreatorBadges();
+      if (num === MAGIC_NUM) {
+        cell.style.background = ''; cell.style.boxShadow = ''; cell.style.color = '';
+        cell.textContent = '★';
+        cell.style.fontSize = magicFontSize + 'px';
+        cell.dataset.num = String(MAGIC_NUM);
+        cell.classList.add('filled', 'magic-cell', 'return-hint');
+      } else {
+        const c = numColors[num]; if (!c) return;
+        cell.classList.remove('magic-cell');
+        cell.style.background = c.bg;
+        cell.style.boxShadow = `0 2px 12px ${c.shadow}`;
+        cell.style.color = c.text;
+        cell.style.fontSize = fontSize + 'px';
+        cell.textContent = num;
+        cell.dataset.num = String(num);
+        cell.classList.add('filled', 'return-hint');
+        cell.classList.remove('magic-cell');
+      }
+      cell.setAttribute('draggable', 'true');
+      if (!skipCheck) checkCreatorTasks();
+    }
+
+    function creatorClearCell(cell, skipCheck) {
+      // 清除时归还库存
+      const oldNum = creatorGetCellNum(cell);
+      if (oldNum === MAGIC_NUM) {
+        creatorInventory[0]++;
+        updateCreatorBadges();
+      } else if (oldNum > 0 && creatorInventory[oldNum] !== -1) {
+        creatorInventory[oldNum]++;
+        updateCreatorBadges();
+      }
+      cell.style.background = ''; cell.style.boxShadow = ''; cell.style.color = '';
+      cell.textContent = ''; cell.dataset.num = '';
+      cell.classList.remove('filled', 'return-hint', 'magic-cell', 'hint-glow');
+      cell.setAttribute('draggable', 'false');
+      if (!skipCheck) checkCreatorTasks();
+    }
+
+    function creatorGetCellNum(cell) {
+      if (!cell || !cell.classList.contains('filled')) return -1;
+      return parseInt(cell.dataset.num);
+    }
+
+    // 制作模式：拖拽事件
+    let cDragNum = null, cDragFromGrid = false, cDragSourceCell = null, cDropHandled = false;
+
+    function bindCreatorDrag() {
+      // 制作模式专用的面板高亮和检测
+      const cHighlightPanel = (on) => creatorPanelEl.classList.toggle('highlight-return', on);
+      const cIsOverPanel = (x, y) => { const rect = creatorPanelEl.getBoundingClientRect(); return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom; };
+
+      creatorPanelEl.querySelectorAll('.number-block').forEach(block => {
+        block.addEventListener('dragstart', (e) => {
+          const num = parseInt(block.dataset.num);
+          const inv = creatorInventory[num];
+          if (inv !== -1 && inv <= 0) {
+            e.preventDefault(); showToast(`${num === MAGIC_NUM ? '魔石' : '数字 ' + num} 已耗尽`); return;
+          }
+          e.stopPropagation();
+          cDragNum = num; cDragFromGrid = false; cDragSourceCell = null; cDropHandled = false;
+          block.classList.add('dragging');
+          const img = new Image(); img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+          e.dataTransfer.setDragImage(img, 0, 0); e.dataTransfer.effectAllowed = 'copy';
+          createGhost(cDragNum, e.clientX, e.clientY);
+        });
+        block.addEventListener('dragend', () => {
+          block.classList.remove('dragging');
+          removeGhost(); clearHighlight(); cHighlightPanel(false);
+          cDragNum = null; cDragFromGrid = false; cDragSourceCell = null; cDropHandled = false;
+        });
+      });
+
+      creatorGridEl.addEventListener('dragstart', (e) => {
+        const cell = e.target.closest('.grid-cell');
+        if (!cell || !cell.classList.contains('filled')) { e.preventDefault(); return; }
+        e.stopPropagation();
+        cDragNum = creatorGetCellNum(cell); cDragFromGrid = true; cDragSourceCell = cell; cDropHandled = false;
+        const img = new Image(); img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        e.dataTransfer.setDragImage(img, 0, 0); e.dataTransfer.effectAllowed = 'move';
+        createGhost(cDragNum, e.clientX, e.clientY);
+        // 从网格拖起时，归还库存（如果放置失败，dragend会重新扣回）
+        if (cDragNum === MAGIC_NUM) {
+          creatorInventory[0]++;
+          updateCreatorBadges();
+        } else if (cDragNum > 0 && creatorInventory[cDragNum] !== -1) {
+          creatorInventory[cDragNum]++;
+          updateCreatorBadges();
+        }
+        cell.style.background = ''; cell.style.boxShadow = ''; cell.style.color = '';
+        cell.textContent = ''; cell.dataset.num = '';
+        cell.classList.remove('filled', 'return-hint', 'magic-cell', 'hint-glow');
+        cell.setAttribute('draggable', 'false');
+      });
+
+      creatorGridEl.addEventListener('dragend', () => {
+        removeGhost(); clearHighlight(); cHighlightPanel(false);
+        if (!cDropHandled && cDragFromGrid && cDragSourceCell && cDragNum !== null) {
+          // 拖拽未成功放置：恢复到源格子（需重新扣库存）
+          if (cDragNum === MAGIC_NUM && (creatorInventory[0] || 0) > 0) {
+            creatorInventory[0]--;
+            updateCreatorBadges();
+          } else if (cDragNum > 0 && creatorInventory[cDragNum] !== -1 && (creatorInventory[cDragNum] || 0) > 0) {
+            creatorInventory[cDragNum]--;
+            updateCreatorBadges();
+          }
+          creatorApplyColor(cDragSourceCell, cDragNum);
+        }
+        cDragNum = null; cDragFromGrid = false; cDragSourceCell = null; cDropHandled = false;
+      });
+
+      creatorGridEl.addEventListener('dragover', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        e.dataTransfer.dropEffect = cDragFromGrid ? 'move' : 'copy';
+        moveGhost(e.clientX, e.clientY); highlightTarget(e.clientX, e.clientY); cHighlightPanel(false);
+      });
+
+      creatorGridEl.addEventListener('dragleave', (e) => { if (!creatorGridEl.contains(e.relatedTarget)) clearHighlight(); });
+
+      creatorGridEl.addEventListener('drop', (e) => {
+        e.preventDefault(); e.stopPropagation(); if (cDragNum === null) return;
+        if (ghostEl) ghostEl.style.display = 'none';
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        if (ghostEl) ghostEl.style.display = '';
+        const cell = el ? el.closest('.grid-cell') : null;
+        if (cell) {
+          // 格子已有数字时先清除（制作模式需归还魔石库存）
+          if (cell.classList.contains('filled')) {
+            creatorClearCell(cell);
+          }
+          creatorApplyColor(cell, cDragNum);
+          cDropHandled = true;
+        } else if (cDragFromGrid && cDragSourceCell) {
+          creatorApplyColor(cDragSourceCell, cDragNum); cDropHandled = true;
+        }
+        removeGhost(); clearHighlight(); cDragNum = null; cDragFromGrid = false; cDragSourceCell = null; cDropHandled = false;
+      });
+
+      creatorPanelEl.addEventListener('dragover', (e) => {
+        if (cDragFromGrid && cDragNum !== null) {
+          e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move';
+          moveGhost(e.clientX, e.clientY); cHighlightPanel(true); clearHighlight();
+        }
+      });
+      creatorPanelEl.addEventListener('dragleave', (e) => { if (!creatorPanelEl.contains(e.relatedTarget)) cHighlightPanel(false); });
+      creatorPanelEl.addEventListener('drop', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        // 制作模式拖回面板：魔石已在dragstart时归还，格子已在dragstart时清空
+        if (cDragFromGrid && cDragSourceCell) { cDropHandled = true; }
+        removeGhost(); clearHighlight(); cHighlightPanel(false);
+        cDragNum = null; cDragFromGrid = false; cDragSourceCell = null; cDropHandled = false;
+      });
+
+      // 双击归还（制作模式下清空格子）
+      creatorGridEl.addEventListener('dblclick', (e) => {
+        const cell = e.target.closest('.grid-cell');
+        if (cell && cell.classList.contains('filled')) {
+          creatorClearCell(cell);
+          cell.classList.add('snap-anim'); setTimeout(() => cell.classList.remove('snap-anim'), 300);
+        }
+      });
+    }
+
+    // 制作模式：触摸拖拽
+    let cTouchDragNum = null, cTouchSourceCell = null, cTouchFromPanel = false, cTouchDragId = null;
+
+    function bindCreatorTouch() {
+      const cHighlightPanel = (on) => creatorPanelEl.classList.toggle('highlight-return', on);
+      const cIsOverPanel = (x, y) => { const rect = creatorPanelEl.getBoundingClientRect(); return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom; };
+
+      creatorPanelEl.querySelectorAll('.number-block').forEach(block => {
+        block.addEventListener('touchstart', (e) => {
+          if (cTouchDragNum !== null) return;
+          const num = parseInt(block.dataset.num);
+          const inv = creatorInventory[num];
+          if (inv !== -1 && inv <= 0) {
+            e.preventDefault(); showToast(`${num === MAGIC_NUM ? '魔石' : '数字 ' + num} 已耗尽`); return;
+          }
+          e.preventDefault(); cTouchDragNum = num; cTouchFromPanel = true; cTouchSourceCell = null; cTouchDragId = e.changedTouches[0].identifier;
+          createGhost(cTouchDragNum, e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+          block.classList.add('dragging');
+        }, { passive: false });
+      });
+
+      creatorGridEl.addEventListener('touchstart', (e) => {
+        if (cTouchDragNum !== null) return;
+        const cell = e.target.closest('.grid-cell');
+        if (!cell || !cell.classList.contains('filled')) return;
+        e.preventDefault(); cTouchDragNum = creatorGetCellNum(cell); cTouchFromPanel = false; cTouchSourceCell = cell; cTouchDragId = e.changedTouches[0].identifier;
+        createGhost(cTouchDragNum, e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+        // 从网格拖起时归还库存
+        if (cTouchDragNum === MAGIC_NUM) {
+          creatorInventory[0]++;
+          updateCreatorBadges();
+        } else if (cTouchDragNum > 0 && creatorInventory[cTouchDragNum] !== -1) {
+          creatorInventory[cTouchDragNum]++;
+          updateCreatorBadges();
+        }
+        cell.style.background = ''; cell.style.boxShadow = ''; cell.style.color = '';
+        cell.textContent = ''; cell.dataset.num = '';
+        cell.classList.remove('filled', 'return-hint', 'magic-cell', 'hint-glow');
+        cell.setAttribute('draggable', 'false');
+      }, { passive: false });
+
+      document.addEventListener('touchmove', (e) => {
+        if (cTouchDragNum === null) return;
+        // 区分制作模式触摸和游戏触摸
+        const pageCreator = document.getElementById('pageCreator');
+        if (!pageCreator.classList.contains('active')) return;
+        e.preventDefault();
+        let touch = null;
+        for (let i = 0; i < e.touches.length; i++) {
+          if (e.touches[i].identifier === cTouchDragId) { touch = e.touches[i]; break; }
+        }
+        if (!touch) return;
+        moveGhost(touch.clientX, touch.clientY); highlightTarget(touch.clientX, touch.clientY);
+        if (!cTouchFromPanel && cTouchSourceCell) cHighlightPanel(cIsOverPanel(touch.clientX, touch.clientY));
+      }, { passive: false });
+
+      document.addEventListener('touchend', (e) => {
+        if (cTouchDragNum === null) return;
+        const pageCreator = document.getElementById('pageCreator');
+        if (!pageCreator.classList.contains('active')) return;
+        let endedTouch = null;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === cTouchDragId) { endedTouch = e.changedTouches[i]; break; }
+        }
+        if (!endedTouch) return;
+        if (ghostEl) ghostEl.style.display = 'none';
+        const el = document.elementFromPoint(endedTouch.clientX, endedTouch.clientY);
+        if (ghostEl) ghostEl.style.display = '';
+        const cell = el ? el.closest('.grid-cell') : null;
+        const overPanel = cIsOverPanel(endedTouch.clientX, endedTouch.clientY);
+        if (cell) {
+          // 格子已有数字时先清除（归还魔石库存）
+          if (cell.classList.contains('filled')) {
+            creatorClearCell(cell);
+          }
+          creatorApplyColor(cell, cTouchDragNum);
+        } else if (overPanel && !cTouchFromPanel && cTouchSourceCell) {
+          // 拖回面板，魔石已在touchstart时归还，无需额外操作
+        } else if (cTouchSourceCell) {
+          // 未成功放置，恢复到源格子（需重新扣库存）
+          if (cTouchDragNum === MAGIC_NUM && (creatorInventory[0] || 0) > 0) {
+            creatorInventory[0]--;
+            updateCreatorBadges();
+          } else if (cTouchDragNum > 0 && creatorInventory[cTouchDragNum] !== -1 && (creatorInventory[cTouchDragNum] || 0) > 0) {
+            creatorInventory[cTouchDragNum]--;
+            updateCreatorBadges();
+          }
+          creatorApplyColor(cTouchSourceCell, cTouchDragNum);
+        }
+        removeGhost(); clearHighlight(); cHighlightPanel(false);
+        creatorPanelEl.querySelectorAll('.number-block').forEach(b => b.classList.remove('dragging'));
+        cTouchDragNum = null; cTouchSourceCell = null; cTouchFromPanel = false; cTouchDragId = null;
+      });
+    }
+
+    // 制作模式：整体移动
+    function creatorShiftGrid(dir) {
+      const filled = [];
+      for (let r = 0; r < creatorRows; r++) {
+        for (let c = 0; c < creatorCols; c++) {
+          const cell = creatorCells[r * creatorCols + c];
+          if (cell.classList.contains('filled')) {
+            filled.push({ row: r, col: c, num: creatorGetCellNum(cell) });
+          }
+        }
+      }
+      if (filled.length === 0) { showToast('网格中没有数字'); return; }
+      let dr = 0, dc = 0;
+      if (dir === 'up') dr = -1;
+      else if (dir === 'down') dr = 1;
+      else if (dir === 'left') dc = -1;
+      else if (dir === 'right') dc = 1;
+      // 检查是否越界
+      if (filled.some(f => f.row + dr < 0 || f.row + dr >= creatorRows || f.col + dc < 0 || f.col + dc >= creatorCols)) {
+        showToast('已到边界'); return;
+      }
+      creatorCells.forEach(c => creatorClearCell(c, true));
+      filled.forEach(f => {
+        const newCell = creatorCells[(f.row + dr) * creatorCols + (f.col + dc)];
+        creatorApplyColor(newCell, f.num, true);
+      });
+      checkCreatorTasks();
+    }
+
+    function bindCreatorShift() {
+      document.querySelectorAll('[data-cdir]').forEach(btn => {
+        btn.addEventListener('click', () => creatorShiftGrid(btn.dataset.cdir));
+      });
+      document.getElementById('creatorResetBtn').addEventListener('click', () => {
+        creatorCells.forEach(c => creatorClearCell(c, true));
+        checkCreatorTasks();
+        showToast('网格已清空');
+      });
+    }
+
+    // ===== 自动求解与多解检测 =====
+    function solveCreatorLevel() {
+      if (creatorTasks.length === 0) {
+        showToast('请先添加目标');
+        return;
+      }
+
+      const rows = creatorRows, cols = creatorCols;
+      const CONFLICT = 99;
+
+      // 预计算每个任务的所有合法放置位置
+      const taskPlacements = creatorTasks.map(task => {
+        const grid = task.grid;
+        const tRows = grid.length;
+        const tCols = Math.max(...grid.map(r => r.length));
+        const positions = [];
+        for (let r = 0; r <= rows - tRows; r++) {
+          for (let c = 0; c <= cols - tCols; c++) {
+            positions.push({ r, c });
+          }
+        }
+        return { grid, positions };
+      });
+
+      // 如果某个任务放不下网格，直接无解
+      if (taskPlacements.some(tp => tp.positions.length === 0)) {
+        showToast('无解，请检查目标形状或增加数字库存');
+        return;
+      }
+
+      // 按位置数从少到多排序，加速剪枝
+      const order = taskPlacements.map((tp, i) => ({ idx: i, count: tp.positions.length }));
+      order.sort((a, b) => a.count - b.count);
+      const sortedPlacements = order.map(o => taskPlacements[o.idx]);
+
+      // 库存副本：lim = 总上限 = 剩余可用 + 已放置数量
+      const placedCount = {};
+      for (let n = 0; n <= 9; n++) placedCount[n] = 0;
+      creatorCells.forEach(cell => {
+        if (cell.classList.contains('filled')) {
+          const num = creatorGetCellNum(cell);
+          if (num >= 0 && num <= 9) placedCount[num]++;
+        }
+      });
+      const lim = {};
+      for (let n = 0; n <= 9; n++) {
+        lim[n] = creatorInventory[n] === -1 ? -1 : creatorInventory[n] + (placedCount[n] || 0);
+      }
+
+      let solutionCount = 0;
+      let firstResult = null;
+      const MAX_SOLUTIONS = 500;
+
+      // 网格需求表: -1=空, 0=需魔石, 1-9=需数字, CONFLICT=冲突(需魔石)
+      const req = [];
+      for (let r = 0; r < rows; r++) req.push(new Array(cols).fill(-1));
+
+      // 使用量统计
+      const use = {};
+      for (let n = 0; n <= 9; n++) use[n] = 0;
+
+      function dfs(taskIdx) {
+        if (solutionCount >= MAX_SOLUTIONS) return;
+        if (taskIdx === sortedPlacements.length) {
+          if (use[0] > lim[0]) return;
+          for (let n = 1; n <= 9; n++) {
+            if (lim[n] !== -1 && use[n] > lim[n]) return;
+          }
+          solutionCount++;
+          if (!firstResult) {
+            firstResult = req.map(row => [...row]);
+          }
+          return;
+        }
+
+        const { grid, positions } = sortedPlacements[taskIdx];
+
+        for (const pos of positions) {
+          const undoStack = [];
+          let valid = true;
+
+          for (let pr = 0; pr < grid.length && valid; pr++) {
+            for (let pc = 0; pc < grid[pr].length && valid; pc++) {
+              const target = grid[pr][pc];
+              if (target === null || target === undefined || target < 0) continue;
+
+              const gr = pos.r + pr;
+              const gc = pos.c + pc;
+              const old = req[gr][gc];
+
+              if (old === -1) {
+                // 空位 → 直接放置
+                req[gr][gc] = target;
+                if (target === 0) {
+                  use[0]++;
+                  if (use[0] > lim[0]) valid = false;
+                } else {
+                  use[target]++;
+                  if (lim[target] !== -1 && use[target] > lim[target]) valid = false;
+                }
+                undoStack.push({ r: gr, c: gc, old, target, type: 'place' });
+              } else if (old === CONFLICT) {
+                // 已是冲突位，魔石万能，无需操作
+              } else if (old === target) {
+                // 要求一致，无需操作
+              } else if (old === 0) {
+                // 已有魔石要求，又要求其他数字 → 魔石同时满足，不变
+              } else if (target === 0) {
+                // 已有数字old，又要求魔石 → 冲突，需魔石
+                req[gr][gc] = CONFLICT;
+                use[0]++;
+                use[old]--;
+                if (use[0] > lim[0]) valid = false;
+                undoStack.push({ r: gr, c: gc, old, target, type: 'toconflict' });
+              } else {
+                // 两个不同数字冲突 → 需魔石
+                req[gr][gc] = CONFLICT;
+                use[0]++;
+                use[target]++;
+                use[old]--;
+                if (use[0] > lim[0]) valid = false;
+                if (lim[target] !== -1 && use[target] > lim[target]) valid = false;
+                undoStack.push({ r: gr, c: gc, old, target, type: 'toconflict' });
+              }
+            }
+          }
+
+          if (valid) dfs(taskIdx + 1);
+
+          // 回溯
+          for (let i = undoStack.length - 1; i >= 0; i--) {
+            const u = undoStack[i];
+            req[u.r][u.c] = u.old;
+            if (u.type === 'place') {
+              if (u.target === 0) use[0]--;
+              else use[u.target]--;
+            } else { // toconflict
+              use[0]--;
+              if (u.target > 0) use[u.target]--;
+              if (u.old > 0) use[u.old]++;
+            }
+          }
+        }
+      }
+
+      dfs(0);
+
+      if (solutionCount === 0) {
+        showToast('无解，请检查目标形状或增加数字库存');
+        return;
+      }
+
+      // 清空网格
+      creatorCells.forEach(c => creatorClearCell(c, true));
+
+      // 填入第一个解
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const val = firstResult[r][c];
+          if (val === CONFLICT || val === 0) {
+            creatorApplyColor(creatorCells[r * cols + c], MAGIC_NUM, true);
+          } else if (val >= 1 && val <= 9) {
+            creatorApplyColor(creatorCells[r * cols + c], val, true);
+          }
+        }
+      }
+
+      checkCreatorTasks();
+      showToast('求解成功！共找到 ' + solutionCount + (solutionCount >= MAX_SOLUTIONS ? '+' : '') + ' 个解');
+    }
+
+    // 自动求解按钮事件
+    document.getElementById('creatorAutoSolveBtn').addEventListener('click', function() {
+      this.disabled = true;
+      this.textContent = '求解中...';
+      // 使用 setTimeout 让 UI 更新（按钮禁用状态能显示）
+      setTimeout(() => {
+        try {
+          solveCreatorLevel();
+        } finally {
+          this.disabled = false;
+          this.textContent = '自动求解';
+        }
+      }, 30);
+    });
+
+    // 制作模式：窗口 resize 重新计算网格
+    let creatorResizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(creatorResizeTimer);
+      creatorResizeTimer = setTimeout(() => {
+        if (document.getElementById('pageCreator').classList.contains('active')) {
+          const savedData = [];
+          const savedMagic = [];
+          creatorCells.forEach(cell => {
+            savedData.push(cell.classList.contains('filled') ? (cell.dataset.num || '') : '');
+            savedMagic.push(cell.classList.contains('magic-cell'));
+          });
+          buildCreatorGrid();
+          // resize恢复时不扣库存：临时保存当前库存，恢复后还原
+          const savedInventory = { ...creatorInventory };
+          creatorCells.forEach((cell, i) => {
+            if (savedData[i] !== '') {
+              const val = parseInt(savedData[i]);
+              if (val === MAGIC_NUM) {
+                // 直接渲染，不走库存逻辑
+                const fontSize = Math.max(12, creatorCellSize * 0.42);
+                const magicFontSize = Math.max(14, creatorCellSize * 0.48);
+                cell.style.background = ''; cell.style.boxShadow = ''; cell.style.color = '';
+                cell.textContent = '★';
+                cell.style.fontSize = magicFontSize + 'px';
+                cell.dataset.num = String(MAGIC_NUM);
+                cell.classList.add('filled', 'magic-cell', 'return-hint');
+                cell.setAttribute('draggable', 'true');
+              } else {
+                creatorApplyColor(cell, val, true);
+              }
+              if (savedMagic[i]) cell.classList.add('magic-cell');
+            }
+          });
+          // 还原库存（resize不应改变库存）
+          creatorInventory = { ...savedInventory };
+          updateCreatorBadges();
+          checkCreatorTasks();
+        }
+      }, 300);
+    });
+
+    // 制作模式：鼠标悬停追踪
+    let cHoveredCell = null;
+
+    creatorGridEl.addEventListener('mouseover', (e) => {
+      const cell = e.target.closest('.grid-cell');
+      cHoveredCell = cell;
+    });
+    creatorGridEl.addEventListener('mouseout', (e) => {
+      if (!creatorGridEl.contains(e.relatedTarget)) cHoveredCell = null;
+    });
+
+    // 制作模式：点击拾取-放置
+    let cPickingNum = null, cPickingFromGrid = false, cPickingSourceCell = null, cMouseFollowActive = false;
+
+    function cStartPickFromPanel(num) {
+      const inv = creatorInventory[num];
+      if (inv !== -1 && inv <= 0) {
+        showToast(`${num === MAGIC_NUM ? '魔石' : '数字 ' + num} 已耗尽`);
+        return;
+      }
+      cCancelPick();
+      cPickingNum = num; cPickingFromGrid = false; cPickingSourceCell = null;
+      cMouseFollowActive = true;
+      createGhost(num, lastMouseX, lastMouseY);
+      document.body.style.cursor = 'none';
+    }
+
+    function cStartPickFromGrid(cell) {
+      if (!cell || !cell.classList.contains('filled')) return;
+      const num = creatorGetCellNum(cell);
+      cCancelPick();
+      cPickingNum = num; cPickingFromGrid = true; cPickingSourceCell = cell;
+      // 从网格拾取时归还库存
+      if (num === MAGIC_NUM) {
+        creatorInventory[0]++;
+        updateCreatorBadges();
+      } else if (num > 0 && creatorInventory[num] !== -1) {
+        creatorInventory[num]++;
+        updateCreatorBadges();
+      }
+      cell.style.background = ''; cell.style.boxShadow = ''; cell.style.color = '';
+      cell.textContent = ''; cell.dataset.num = '';
+      cell.classList.remove('filled', 'return-hint', 'magic-cell', 'hint-glow');
+      cell.setAttribute('draggable', 'false');
+      cMouseFollowActive = true;
+      createGhost(num, lastMouseX, lastMouseY);
+      document.body.style.cursor = 'none';
+    }
+
+    function cCancelPick() {
+      if (cPickingFromGrid && cPickingSourceCell && cPickingNum !== null) {
+        // 取消拾取：恢复到源格子（需重新扣库存）
+        if (cPickingNum === MAGIC_NUM && (creatorInventory[0] || 0) > 0) {
+          creatorInventory[0]--;
+          updateCreatorBadges();
+        } else if (cPickingNum > 0 && creatorInventory[cPickingNum] !== -1 && (creatorInventory[cPickingNum] || 0) > 0) {
+          creatorInventory[cPickingNum]--;
+          updateCreatorBadges();
+        }
+        creatorApplyColor(cPickingSourceCell, cPickingNum);
+      }
+      cPickingNum = null; cPickingFromGrid = false; cPickingSourceCell = null;
+      if (cMouseFollowActive) {
+        removeGhost(); clearHighlight();
+        creatorPanelEl.classList.remove('highlight-return');
+        document.body.style.cursor = '';
+        cMouseFollowActive = false;
+      }
+    }
+
+    function cPlacePick(targetCell) {
+      if (cPickingNum === null || !targetCell) return;
+      // 目标格子已有数字时先清除（归还魔石库存）
+      if (targetCell.classList.contains('filled')) {
+        creatorClearCell(targetCell);
+      }
+      creatorApplyColor(targetCell, cPickingNum);
+      cPickingNum = null; cPickingFromGrid = false; cPickingSourceCell = null;
+      removeGhost(); clearHighlight();
+      creatorPanelEl.classList.remove('highlight-return');
+      document.body.style.cursor = '';
+      cMouseFollowActive = false;
+    }
+
+    // 制作模式：鼠标跟随
+    document.addEventListener('mousemove', (e) => {
+      if (!cMouseFollowActive) return;
+      if (!document.getElementById('pageCreator').classList.contains('active')) return;
+      if (document.getElementById('taskModal').classList.contains('show')) return;
+      moveGhost(e.clientX, e.clientY);
+      if (ghostEl) ghostEl.style.display = 'none';
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (ghostEl) ghostEl.style.display = '';
+      const cell = el ? el.closest('.grid-cell') : null;
+      clearHighlight();
+      if (cell) cell.classList.add('highlight'), highlightedCell = cell;
+      const cIsOverPanel = () => { const rect = creatorPanelEl.getBoundingClientRect(); return e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom; };
+      if (cPickingFromGrid) creatorPanelEl.classList.toggle('highlight-return', cIsOverPanel());
+      else creatorPanelEl.classList.remove('highlight-return');
+    });
+
+    // 制作模式：点击交互
+    document.addEventListener('click', (e) => {
+      if (!document.getElementById('pageCreator').classList.contains('active')) return;
+      if (document.getElementById('taskModal').classList.contains('show')) return;
+
+      const block = e.target.closest('#creatorNumberPanel .number-block');
+      if (block) {
+        const num = parseInt(block.dataset.num);
+        if (cMouseFollowActive && cPickingNum === num && !cPickingFromGrid) {
+          cCancelPick();
+        } else {
+          cStartPickFromPanel(num);
+        }
+        return;
+      }
+
+      const cell = e.target.closest('#creatorGrid .grid-cell');
+      if (cell) {
+        if (cMouseFollowActive) {
+          cPlacePick(cell);
+        } else {
+          if (cell.classList.contains('filled')) {
+            cStartPickFromGrid(cell);
+          }
+        }
+        return;
+      }
+
+      // 点击数字面板区域（归还 → 制作模式清空格子）
+      const cIsOverPanel = () => { const rect = creatorPanelEl.getBoundingClientRect(); return e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom; };
+      if (cMouseFollowActive && cIsOverPanel() && cPickingFromGrid) {
+        // 从网格拖回面板 → 清空源格子（已在 startPickFromGrid 时清除）
+        cPickingNum = null; cPickingFromGrid = false; cPickingSourceCell = null;
+        removeGhost(); clearHighlight();
+        creatorPanelEl.classList.remove('highlight-return');
+        document.body.style.cursor = '';
+        cMouseFollowActive = false;
+        return;
+      }
+
+      // 点击空白区域 → 取消
+      if (cMouseFollowActive) {
+        cCancelPick();
+      }
+    });
+
+    // 制作模式：右键/ESC取消拾取
+    document.addEventListener('contextmenu', (e) => {
+      if (cMouseFollowActive && document.getElementById('pageCreator').classList.contains('active')) { e.preventDefault(); cCancelPick(); }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && cMouseFollowActive && document.getElementById('pageCreator').classList.contains('active')) { cCancelPick(); }
+      // 弹窗ESC由弹窗键盘事件单独处理，此处不再处理
+    });
+
+    // 制作模式键盘支持（扩展）
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('pageCreator').classList.contains('active')) return;
+      if (document.getElementById('taskModal').classList.contains('show')) return; // 弹窗打开时跳过
+      if (document.getElementById('inventoryModal').classList.contains('show')) return; // 库存弹窗时跳过
+
+      const key = e.key;
+
+      // 键盘数字输入：1-9和0
+      if (/^[0-9]$/.test(key) && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        const num = parseInt(key);
+        if (num !== MAGIC_NUM && !numColors[num]) return;
+        if (!cHoveredCell) {
+          showToast('请将鼠标悬停在网格格子上');
+          return;
+        }
+        // 制作模式：覆盖放置（魔石有库存限制）
+        if (cHoveredCell.classList.contains('filled')) {
+          creatorClearCell(cHoveredCell);
+        }
+        creatorApplyColor(cHoveredCell, num);
+        return;
+      }
+
+      // Delete/Backspace 清除悬停格子
+      if ((key === 'Delete' || key === 'Backspace') && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        if (cHoveredCell && cHoveredCell.classList.contains('filled')) {
+          e.preventDefault();
+          creatorClearCell(cHoveredCell);
+          cHoveredCell.classList.add('snap-anim');
+          setTimeout(() => cHoveredCell.classList.remove('snap-anim'), 300);
+        }
+        return;
+      }
+
+      // WASD / 方向键整体移动
+      let dir = null;
+      if (key === 'w' || key === 'W' || key === 'ArrowUp') dir = 'up';
+      else if (key === 's' || key === 'S' || key === 'ArrowDown') dir = 'down';
+      else if (key === 'a' || key === 'A' || key === 'ArrowLeft') dir = 'left';
+      else if (key === 'd' || key === 'D' || key === 'ArrowRight') dir = 'right';
+      if (dir) { e.preventDefault(); creatorShiftGrid(dir); }
+    });
+
+    // ===== 完成制作：校验与导出 =====
+    function checkCreatorSolutionsQuietly() {
+      const rows = creatorRows, cols = creatorCols;
+      const CONFLICT = 99;
+
+      const taskPlacements = creatorTasks.map(task => {
+        const grid = task.grid;
+        const tRows = grid.length;
+        const tCols = Math.max(...grid.map(r => r.length));
+        const positions = [];
+        for (let r = 0; r <= rows - tRows; r++) {
+          for (let c = 0; c <= cols - tCols; c++) {
+            positions.push({ r, c });
+          }
+        }
+        return { grid, positions };
+      });
+
+      if (taskPlacements.some(tp => tp.positions.length === 0)) return 0;
+
+      const order = taskPlacements.map((tp, i) => ({ idx: i, count: tp.positions.length }));
+      order.sort((a, b) => a.count - b.count);
+      const sortedPlacements = order.map(o => taskPlacements[o.idx]);
+
+      const placedCount = {};
+      for (let n = 0; n <= 9; n++) placedCount[n] = 0;
+      creatorCells.forEach(cell => {
+        if (cell.classList.contains('filled')) {
+          const num = creatorGetCellNum(cell);
+          if (num >= 0 && num <= 9) placedCount[num]++;
+        }
+      });
+      const lim = {};
+      for (let n = 0; n <= 9; n++) {
+        lim[n] = creatorInventory[n] === -1 ? -1 : creatorInventory[n] + (placedCount[n] || 0);
+      }
+
+      let solutionCount = 0;
+      const MAX_SOLUTIONS = 5;
+
+      const req = [];
+      for (let r = 0; r < rows; r++) req.push(new Array(cols).fill(-1));
+
+      const use = {};
+      for (let n = 0; n <= 9; n++) use[n] = 0;
+
+      function dfs(taskIdx) {
+        if (solutionCount >= MAX_SOLUTIONS) return;
+        if (taskIdx === sortedPlacements.length) {
+          if (use[0] > lim[0]) return;
+          for (let n = 1; n <= 9; n++) {
+            if (lim[n] !== -1 && use[n] > lim[n]) return;
+          }
+          solutionCount++;
+          return;
+        }
+
+        const { grid, positions } = sortedPlacements[taskIdx];
+
+        for (const pos of positions) {
+          const undoStack = [];
+          let valid = true;
+
+          for (let pr = 0; pr < grid.length && valid; pr++) {
+            for (let pc = 0; pc < grid[pr].length && valid; pc++) {
+              const target = grid[pr][pc];
+              if (target === null || target === undefined || target < 0) continue;
+
+              const gr = pos.r + pr;
+              const gc = pos.c + pc;
+              const old = req[gr][gc];
+
+              if (old === -1) {
+                req[gr][gc] = target;
+                if (target === 0) {
+                  use[0]++;
+                  if (use[0] > lim[0]) valid = false;
+                } else {
+                  use[target]++;
+                  if (lim[target] !== -1 && use[target] > lim[target]) valid = false;
+                }
+                undoStack.push({ r: gr, c: gc, old, target, type: 'place' });
+              } else if (old === CONFLICT) {
+                // 已是冲突位，魔石万能
+              } else if (old === target) {
+                // 要求一致
+              } else if (old === 0) {
+                // 已有魔石要求，又要求其他数字 → 魔石同时满足
+              } else if (target === 0) {
+                req[gr][gc] = CONFLICT;
+                use[0]++;
+                use[old]--;
+                if (use[0] > lim[0]) valid = false;
+                undoStack.push({ r: gr, c: gc, old, target, type: 'toconflict' });
+              } else {
+                req[gr][gc] = CONFLICT;
+                use[0]++;
+                use[target]++;
+                use[old]--;
+                if (use[0] > lim[0]) valid = false;
+                if (lim[target] !== -1 && use[target] > lim[target]) valid = false;
+                undoStack.push({ r: gr, c: gc, old, target, type: 'toconflict' });
+              }
+            }
+          }
+
+          if (valid) dfs(taskIdx + 1);
+
+          for (let i = undoStack.length - 1; i >= 0; i--) {
+            const u = undoStack[i];
+            req[u.r][u.c] = u.old;
+            if (u.type === 'place') {
+              if (u.target === 0) use[0]--;
+              else use[u.target]--;
+            } else {
+              use[0]--;
+              if (u.target > 0) use[u.target]--;
+              if (u.old > 0) use[u.old]++;
+            }
+          }
+        }
+      }
+
+      dfs(0);
+      return solutionCount;
+    }
+
+    document.getElementById('creatorFinishBtn').addEventListener('click', function() {
+      // 1. 空目标检测
+      if (creatorTasks.length === 0) {
+        showToast('请先添加目标');
+        return;
+      }
+
+      // 2. 边界检测：最外层四边必须都有数字
+      let minR = creatorRows, maxR = -1, minC = creatorCols, maxC = -1;
+      creatorCells.forEach((cell, i) => {
+        if (cell.classList.contains('filled')) {
+          const r = Math.floor(i / creatorCols);
+          const c = i % creatorCols;
+          if (r < minR) minR = r;
+          if (r > maxR) maxR = r;
+          if (c < minC) minC = c;
+          if (c > maxC) maxC = c;
+        }
+      });
+      if (minR !== 0 || maxR !== creatorRows - 1 || minC !== 0 || maxC !== creatorCols - 1) {
+        showToast('网格最外层的四边(上下左右)必须都有数字');
+        return;
+      }
+
+      // 3. 静默求解检测
+      const solCount = checkCreatorSolutionsQuietly();
+      if (solCount === 0) {
+        showToast('当前关卡无解，请检查目标或库存');
+        return;
+      }
+      if (solCount > 4) {
+        showToast('当前关卡存在多解 (大于4个)，请增加目标或减少库存限制');
+        return;
+      }
+
+      // 校验通过，显示命名弹窗
+      document.getElementById('exportLevelName').value = '';
+      document.getElementById('exportModal').classList.add('show');
+    });
+
+    document.getElementById('exportCancelBtn').addEventListener('click', () => {
+      document.getElementById('exportModal').classList.remove('show');
+    });
+
+    document.getElementById('exportConfirmBtn').addEventListener('click', () => {
+      const name = document.getElementById('exportLevelName').value.trim() || '未命名关卡';
+
+      // 计算真实库存 = 剩余可用 + 网格上已放置的数量
+      const placedCount = {};
+      for (let n = 0; n <= 9; n++) placedCount[n] = 0;
+      creatorCells.forEach(cell => {
+        if (cell.classList.contains('filled')) {
+          const num = creatorGetCellNum(cell);
+          if (num >= 0 && num <= 9) placedCount[num]++;
+        }
+      });
+      const inventory = {};
+      for (let n = 0; n <= 9; n++) {
+        if (creatorInventory[n] === -1) {
+          inventory[n] = -1;
+        } else {
+          inventory[n] = creatorInventory[n] + (placedCount[n] || 0);
+        }
+      }
+
+      // 计算 rows/cols（根据实际使用的范围）
+      let actualMinR = creatorRows, actualMaxR = -1, actualMinC = creatorCols, actualMaxC = -1;
+      creatorCells.forEach((cell, i) => {
+        if (cell.classList.contains('filled')) {
+          const r = Math.floor(i / creatorCols);
+          const c = i % creatorCols;
+          if (r < actualMinR) actualMinR = r;
+          if (r > actualMaxR) actualMaxR = r;
+          if (c < actualMinC) actualMinC = c;
+          if (c > actualMaxC) actualMaxC = c;
+        }
+      });
+      const actualRows = actualMaxR - actualMinR + 1;
+      const actualCols = actualMaxC - actualMinC + 1;
+
+      // 构建紧凑网格（仅包含有数字的区域）
+      const compactGrid = [];
+      for (let r = actualMinR; r <= actualMaxR; r++) {
+        const row = [];
+        for (let c = actualMinC; c <= actualMaxC; c++) {
+          const cell = creatorCells[r * creatorCols + c];
+          const num = creatorGetCellNum(cell);
+          row.push(num >= 0 ? num : -1);
+        }
+        compactGrid.push(row);
+      }
+
+      // 调整 tasks 中的坐标（因为裁剪了网格）
+      const adjustedTasks = creatorTasks.map(task => ({ grid: task.grid }));
+
+      // 生成关卡数据字符串
+      const invStr = Object.keys(inventory).sort((a, b) => Number(a) - Number(b))
+        .map(k => `${k}:${inventory[k]}`).join(', ');
+      const tasksStr = adjustedTasks.map(task => {
+        const gridStr = task.grid.map(row =>
+          '[' + row.map(v => v === -1 ? '-1' : String(v)).join(', ') + ']'
+        ).join(', ');
+        return `    { grid: [${gridStr}] }`;
+      }).join(',\n');
+
+      const levelStr = `{\n  name: '${name.replace(/'/g, "\\'")}',\n  rows: ${actualRows}, cols: ${actualCols},\n  inventory: { ${invStr} },\n  tasks: [\n${tasksStr}\n  ]\n}`;
+
+      // 生成并下载 txt 文件
+      const blob = new Blob([levelStr], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name + '.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      document.getElementById('exportModal').classList.remove('show');
+      showToast('关卡导出成功！');
+    });
+
+    // exportModal ESC关闭
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && document.getElementById('exportModal').classList.contains('show')) {
+        document.getElementById('exportModal').classList.remove('show');
+      }
+    });
 
     // ===== 星空背景 =====
     (function initStarfield() {
